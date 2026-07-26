@@ -1,0 +1,65 @@
+.hero {
+  position: relative;
+  background: linear-gradient(160deg, var(--color-dark) 0%, var(--color-dark-mid) 100%);
+  padding: clamp(2.5rem, 6vw, 6rem) 0 clamp(2rem, 4vw, 4rem);
+  overflow: hidden;
+}
+
+.grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: 
+    linear-gradient(rgba(212, 165, 116, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 165, 116, 0.5) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-text-on-dark);
+  margin-bottom: var(--space-4);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.breadcrumbItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.separator {
+  color: var(--color-text-on-dark-muted);
+}
+
+.breadcrumbLink {
+  color: var(--color-accent);
+  transition: color var(--duration-fast);
+}
+
+.breadcrumbLink:hover {
+  color: var(--color-accent-hover);
+}
+
+.breadcrumbCurrent {
+  color: var(--color-text-on-dark-muted);
+}

@@ -1,0 +1,419 @@
+/* ═══════════════════════════════════════════════════════════════════
+   KONARK COMPUTERS — Design System
+   "Precision Workshop" — Technical precision meets warm craftsmanship
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&display=swap');
+
+/* ── CSS Custom Properties (Design Tokens) ── */
+:root {
+  /* Color Palette */
+  --color-dark: #1a1a2e;
+  --color-dark-deep: #0f0f1a;
+  --color-dark-mid: #16213e;
+  --color-accent: #d4a574;
+  --color-accent-hover: #e8bc8e;
+  --color-accent-muted: rgba(212, 165, 116, 0.15);
+  --color-teal: #0f969c;
+  --color-teal-hover: #12b5bc;
+  --color-surface: #f5f0e8;
+  --color-surface-warm: #faf6f0;
+  --color-surface-cool: #eee9e0;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #4a4a5a;
+  --color-text-muted: #7a7a8a;
+  --color-text-on-dark: #f5f0e8;
+  --color-text-on-dark-muted: rgba(245, 240, 232, 0.6);
+  --color-border: rgba(26, 26, 46, 0.1);
+  --color-border-dark: rgba(245, 240, 232, 0.1);
+  --color-white: #ffffff;
+  --color-success: #2ecc71;
+  --color-error: #e74c3c;
+
+  /* Typography */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+
+  /* Type Scale (fluid) */
+  --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+  --text-sm: clamp(0.78rem, 0.73rem + 0.25vw, 0.9rem);
+  --text-base: clamp(0.875rem, 0.82rem + 0.3vw, 1rem);
+  --text-md: clamp(0.95rem, 0.88rem + 0.4vw, 1.15rem);
+  --text-lg: clamp(1.05rem, 0.95rem + 0.5vw, 1.35rem);
+  --text-xl: clamp(1.2rem, 1.05rem + 0.8vw, 1.75rem);
+  --text-2xl: clamp(1.4rem, 1.1rem + 1.5vw, 2.5rem);
+  --text-3xl: clamp(1.75rem, 1.3rem + 2.5vw, 3.5rem);
+  --text-4xl: clamp(2.1rem, 1.5rem + 3.2vw, 4.5rem);
+  --text-hero: clamp(2.4rem, 1.7rem + 4vw, 5.5rem);
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+  --section-padding: clamp(3rem, 5vw, 7rem);
+
+  /* Layout */
+  --container-max: 1280px;
+  --container-narrow: 960px;
+  --container-padding: clamp(0.875rem, 3.5vw, 2rem);
+
+  /* Borders & Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(26, 26, 46, 0.06);
+  --shadow-md: 0 4px 20px rgba(26, 26, 46, 0.08);
+  --shadow-lg: 0 8px 40px rgba(26, 26, 46, 0.12);
+  --shadow-xl: 0 16px 64px rgba(26, 26, 46, 0.16);
+  --shadow-glow: 0 0 40px rgba(212, 165, 116, 0.2);
+  --shadow-teal-glow: 0 0 40px rgba(15, 150, 156, 0.2);
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 400ms;
+  --duration-slow: 600ms;
+
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Subtle noise texture on body */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ── Typography Classes ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: var(--text-4xl); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-2xl); }
+h4 { font-size: var(--text-xl); }
+
+p {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  max-width: 65ch;
+}
+
+/* ── Container ── */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.container--narrow {
+  max-width: var(--container-narrow);
+}
+
+/* ── Section ── */
+.section {
+  padding-top: var(--section-padding);
+  padding-bottom: var(--section-padding);
+}
+
+.section--dark {
+  background-color: var(--color-dark);
+  color: var(--color-text-on-dark);
+}
+
+.section--dark p {
+  color: var(--color-text-on-dark-muted);
+}
+
+.section--accent {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #c4955e 100%);
+  color: var(--color-dark);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-4) clamp(1rem, 3.5vw, 2rem);
+  border-radius: var(--radius-full);
+  transition: all var(--duration-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+  min-height: 44px;
+}
+
+.btn--primary {
+  background: var(--color-teal);
+  color: var(--color-white);
+}
+
+.btn--primary:hover {
+  background: var(--color-teal-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-teal-glow);
+}
+
+.btn--accent {
+  background: var(--color-accent);
+  color: var(--color-dark);
+}
+
+.btn--accent:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn--outline {
+  background: transparent;
+  color: var(--color-text-on-dark);
+  border: 1.5px solid rgba(245, 240, 232, 0.3);
+}
+
+.btn--outline:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-accent);
+  padding: var(--space-2) 0;
+  border-radius: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.btn--ghost:hover {
+  color: var(--color-accent-hover);
+}
+
+.btn--ghost::after {
+  content: ' →';
+  transition: transform var(--duration-fast) var(--ease-out);
+  display: inline-block;
+}
+
+.btn--ghost:hover::after {
+  transform: translateX(4px);
+}
+
+/* ── Section Headers ── */
+.section-header {
+  text-align: center;
+  margin-bottom: var(--space-16);
+}
+
+.section-header__label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-4);
+  display: block;
+}
+
+.section-header__title {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-4);
+}
+
+.section-header__subtitle {
+  font-size: var(--text-md);
+  color: var(--color-text-muted);
+  max-width: 55ch;
+  margin: 0 auto;
+}
+
+/* ── Grid Utilities ── */
+.grid {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .grid--4 { grid-template-columns: repeat(2, 1fr); }
+  .grid--3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .grid--4, .grid--3, .grid--2 { grid-template-columns: 1fr; }
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-dark-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-hover);
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── Selection ── */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-dark);
+}
+
+/* ── Focus Styles ── */
+:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Circuit pattern for dark sections ── */
+.circuit-pattern {
+  position: relative;
+}
+
+.circuit-pattern::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: 
+    linear-gradient(rgba(212, 165, 116, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 165, 116, 0.3) 1px, transparent 1px);
+  background-size: 60px 60px;
+}

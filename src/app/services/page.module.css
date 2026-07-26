@@ -1,0 +1,230 @@
+/* ═══════════════════════════════════
+   SERVICES PAGE
+   ═══════════════════════════════════ */
+
+.services {
+  background: var(--color-surface);
+}
+
+/* ── Service Grid ── */
+.serviceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+@media (max-width: 1024px) {
+  .serviceGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.serviceCard {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid var(--color-border);
+  transition: all var(--duration-normal) var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.serviceCard::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.serviceCard:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+}
+
+.serviceCard:hover::after {
+  transform: scaleX(1);
+}
+
+.serviceIcon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.serviceCard:hover .serviceIcon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.serviceTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--color-dark);
+  margin-bottom: var(--space-3);
+}
+
+.serviceDesc {
+  font-size: var(--text-sm);
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+  flex: 1;
+  margin-bottom: var(--space-6);
+}
+
+.servicePhone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-teal);
+  transition: color var(--duration-fast);
+  margin-top: auto;
+}
+
+.servicePhone:hover {
+  color: var(--color-teal-hover);
+}
+
+/* ── CTA ── */
+.cta {
+  padding: var(--space-16) 0;
+}
+
+.ctaContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ctaTitle {
+  font-size: var(--text-2xl);
+  color: var(--color-dark);
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .ctaContent {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* ── Brand Support ── */
+.brands {
+  position: relative;
+}
+
+.brandGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+}
+
+@media (max-width: 1024px) {
+  .brandGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .brandGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+.brandCard {
+  background: rgba(245, 240, 232, 0.05);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-out);
+  text-align: center;
+}
+
+.brandCard:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.brandLogo {
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  height: 100px;
+}
+
+.brandImg {
+  max-height: 60px;
+  max-width: 140px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.brandInfo {
+  padding: var(--space-4) var(--space-6);
+}
+
+.brandLabel {
+  display: block;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-on-dark-muted);
+  margin-bottom: var(--space-1);
+}
+
+.brandPhone {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-text-on-dark);
+  transition: color var(--duration-fast);
+}
+
+.brandPhone:hover {
+  color: var(--color-accent);
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border-dark);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-teal);
+  transition: all var(--duration-fast);
+}
+
+.brandLink:hover {
+  color: var(--color-teal-hover);
+  background: rgba(15, 150, 156, 0.05);
+}

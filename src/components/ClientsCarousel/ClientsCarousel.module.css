@@ -1,0 +1,145 @@
+/* ═══════════════════════════════════════
+   OUR CLIENTS CAROUSEL SECTION
+   ═══════════════════════════════════════ */
+
+.clientsSection {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+  background: var(--color-surface-warm);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: var(--color-teal);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-dark);
+}
+
+/* ── Original GIF Banner Row ── */
+.gifBannerRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-10);
+  flex-wrap: wrap;
+}
+
+.gifCard {
+  background: var(--color-white);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition: transform var(--duration-normal) var(--ease-out);
+  max-width: 100%;
+}
+
+.gifCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.gifImg {
+  max-height: 70px;
+  max-width: 100%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* ── Infinite Marquee Slider ── */
+.marqueeWrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
+  padding: var(--space-4) 0;
+}
+
+.marqueeTrack {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: max-content;
+  animation: scrollMarquee 30s linear infinite;
+}
+
+.marqueeWrapper:hover .marqueeTrack {
+  animation-play-state: paused;
+}
+
+@keyframes scrollMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.clientItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-white);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  min-width: 170px;
+  height: 85px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.clientItem:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.clientLogo {
+  max-height: 52px;
+  max-width: 130px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .gifBannerRow {
+    gap: var(--space-3);
+  }
+  .gifCard {
+    padding: var(--space-3) var(--space-4);
+  }
+  .gifImg {
+    max-height: 48px;
+  }
+  .clientItem {
+    min-width: 130px;
+    height: 60px;
+    padding: var(--space-2) var(--space-4);
+  }
+  .marqueeTrack {
+    gap: var(--space-4);
+  }
+}

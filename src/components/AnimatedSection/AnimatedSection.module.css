@@ -1,0 +1,31 @@
+.animated {
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Direction variants ── */
+.up {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.left {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.right {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+.fade {
+  opacity: 0;
+  transform: none;
+}
+
+/* ── Visible state ── */
+.visible {
+  opacity: 1;
+  transform: translateY(0) translateX(0);
+}

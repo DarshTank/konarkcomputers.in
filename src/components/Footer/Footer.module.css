@@ -1,0 +1,251 @@
+/* ═══════════════════════════════════
+   FOOTER — Precision Workshop Footer
+   ═══════════════════════════════════ */
+
+.footer {
+  background: var(--color-dark);
+  color: var(--color-text-on-dark);
+  position: relative;
+}
+
+.accentBorder {
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-teal) 50%, var(--color-accent) 100%);
+}
+
+.footerGrid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 0.8fr 0.8fr;
+  gap: var(--space-12);
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-12);
+}
+
+@media (max-width: 1024px) {
+  .footerGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-10);
+  }
+}
+
+@media (max-width: 640px) {
+  .footerGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+}
+
+/* ── Footer Logo ── */
+.footerLogo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  margin-bottom: var(--space-6);
+}
+
+.footerLogoImg {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logoName {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--color-dark);
+  letter-spacing: -0.01em;
+}
+
+.logoSub {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--color-accent);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.logoTagline {
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  color: var(--color-teal);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.aboutText {
+  font-size: var(--text-sm);
+  color: var(--color-text-on-dark-muted);
+  line-height: 1.8;
+  margin-bottom: var(--space-4);
+}
+
+.footerBadges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.footerBadgeImg {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  background: white;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.badgeLink {
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast);
+}
+
+.badgeLink:hover {
+  transform: translateY(-2px) scale(1.05);
+  opacity: 0.95;
+}
+
+.readMore {
+  font-size: var(--text-sm);
+}
+
+/* ── Columns ── */
+.column {
+  min-width: 0;
+}
+
+.columnTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-6);
+  position: relative;
+  padding-bottom: var(--space-3);
+}
+
+.columnTitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+}
+
+/* ── Contact List ── */
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contactList li {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-on-dark-muted);
+  line-height: 1.6;
+}
+
+.contactList li a {
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.contactList li a:hover {
+  color: var(--color-accent);
+}
+
+.contactIcon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--color-accent);
+}
+
+/* ── Link Lists ── */
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.footerLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-on-dark-muted);
+  padding: var(--space-1) 0;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.footerLink:hover {
+  color: var(--color-accent);
+  padding-left: var(--space-2);
+}
+
+/* ── Social Links ── */
+.socialLinks {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.socialBtn {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text-on-dark-muted);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.socialBtn:hover {
+  background: var(--color-accent);
+  color: var(--color-dark);
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+/* ── Bottom Bar ── */
+.bottomBar {
+  border-top: 1px solid var(--color-border-dark);
+  padding: var(--space-6) 0;
+}
+
+.bottomBarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-on-dark-muted);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.credit {
+  color: var(--color-accent);
+  font-weight: 500;
+}
