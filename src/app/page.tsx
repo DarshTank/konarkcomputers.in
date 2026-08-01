@@ -76,7 +76,7 @@ export default function HomePage() {
         <div className={`container ${styles.heroContent}`}>
           <AnimatedSection delay={100}>
             <span className={styles.heroBadge}>
-              TRUSTED SINCE 1999
+              TO WIN YOUR SMILE &bull; TRUSTED SINCE 1999
             </span>
           </AnimatedSection>
           <AnimatedSection delay={200}>
