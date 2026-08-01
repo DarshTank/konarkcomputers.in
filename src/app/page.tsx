@@ -81,11 +81,9 @@ export default function HomePage() {
           </AnimatedSection>
           <AnimatedSection delay={200}>
             <h1 className={styles.heroTitle}>
-              We Tell You
+              Precision Care
               <br />
-              <span className={styles.heroTitleAccent}>What&apos;s Actually Wrong,</span>
-              <br />
-              First.
+              <span className={styles.heroTitleAccent}>for your Digital World</span>
             </h1>
           </AnimatedSection>
           <AnimatedSection delay={350}>
