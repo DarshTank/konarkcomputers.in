@@ -246,9 +246,12 @@ p {
 }
 
 .btn--primary:hover {
+  /* Color Change: brightens teal background */
   background: var(--color-teal-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-teal-glow);
+  /* Scale: makes button grow and lift */
+  transform: translateY(-3px) scale(1.03);
+  /* Shadow: adds depth and neon teal glow */
+  box-shadow: 0 10px 25px -5px rgba(15, 150, 156, 0.45), var(--shadow-teal-glow);
 }
 
 .btn--accent {
@@ -257,9 +260,12 @@ p {
 }
 
 .btn--accent:hover {
+  /* Color Change: shifts to warm gold */
   background: var(--color-accent-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  /* Scale: makes button grow and lift */
+  transform: translateY(-3px) scale(1.03);
+  /* Shadow: adds depth and ambient warm glow */
+  box-shadow: 0 10px 25px -5px rgba(212, 165, 116, 0.45), var(--shadow-glow);
 }
 
 .btn--outline {
@@ -269,9 +275,14 @@ p {
 }
 
 .btn--outline:hover {
+  /* Color Change: border, text, and tinted backdrop */
   border-color: var(--color-accent);
   color: var(--color-accent);
-  transform: translateY(-2px);
+  background: rgba(212, 165, 116, 0.08);
+  /* Scale: makes button grow and lift */
+  transform: translateY(-3px) scale(1.03);
+  /* Shadow: adds depth */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn--ghost {

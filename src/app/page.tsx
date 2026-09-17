@@ -166,11 +166,46 @@ export default function HomePage() {
                     ))}
                   </h3>
                   <p className={styles.processDesc}>{step.description}</p>
-                  {i < 3 && <div className={styles.processConnector} />}
+                  {i < 3 && (
+                    <div className={styles.processConnector} aria-hidden="true">
+                      <svg
+                        className={styles.connectorSvg}
+                        viewBox="0 0 60 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <line
+                          x1="2"
+                          y1="10"
+                          x2="50"
+                          y2="10"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        <polyline
+                          points="42,5 50,10 42,15"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
                 </div>
               </AnimatedSection>
             ))}
           </div>
+
+          <AnimatedSection delay={500}>
+            <div className={styles.processCta}>
+              <Link href="/contact" className="btn btn--accent">
+                Book a Fast Repair
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
