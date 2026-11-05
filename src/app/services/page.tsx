@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { PageHero } from "@/components/PageHero/PageHero";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
 import {
@@ -8,17 +9,27 @@ import {
   Stethoscope,
   Bug,
   Wifi,
-  MessageCircle,
+  Clock,
   Phone,
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
+import { BUSINESS } from "@/lib/business";
+import { YEARS_OF_EXPERIENCE } from "@/lib/constants";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "Services",
-  description:
-    "Computer repair, laptop servicing, networking, virus removal, speed optimization, and 24/7 IT support by Konark Computers Rajkot.",
+  metadataBase: new URL(BUSINESS.siteUrl),
+  title: "Laptop Repair, Virus Removal & Networking in Rajkot",
+  description: `Computer repair, laptop servicing, virus removal & networking in Rajkot by Konark Computers. Over ${YEARS_OF_EXPERIENCE} yrs expertise. Call ${BUSINESS.phoneDisplay}.`,
+  alternates: {
+    canonical: "/services",
+  },
+  openGraph: {
+    title: "Laptop Repair, Virus Removal & Networking in Rajkot",
+    description: `Computer repair, laptop servicing, virus removal & networking in Rajkot by Konark Computers. Over ${YEARS_OF_EXPERIENCE} yrs expertise. Call ${BUSINESS.phoneDisplay}.`,
+    url: "/services",
+  },
 };
 
 const services = [
@@ -26,42 +37,55 @@ const services = [
     icon: <Wrench size={28} />,
     title: "Setup & Installation",
     description:
-      "Comprehensive online support to set-up and install various devices with latest software updates and repair compatibility issues.",
+      "Comprehensive on-site and remote setup for desktop computers, business laptops, and office peripherals across Rajkot. We install genuine operating systems, drivers, and security patches while resolving software and hardware compatibility issues. Our engineers configure local workstations to ensure seamless everyday workflow for corporate offices and home users alike.",
+    landingHref: "/services/computer-repair-rajkot",
+    landingText: "Computer repair details",
     color: "var(--color-accent)",
   },
   {
     icon: <BarChart3 size={28} />,
     title: "Speed & Optimization",
     description:
-      "Installation of critical updates and security patches. We clear temporary files, startup files, unused files, and remove malware/adware.",
+      "If your computer or laptop takes minutes to boot or stutters during routine multitasking, our system tuning restores snappy responsiveness. We clear temporary system caches, clean startup bloatware, fix corrupted registry keys, and eliminate hidden adware. For older systems, we install high-speed SSDs and dual-channel RAM upgrades in Rajkot that deliver instant performance boosts.",
+    landingHref: "/services/computer-repair-rajkot",
+    landingText: "PC upgrade details",
     color: "var(--color-teal)",
   },
   {
     icon: <Stethoscope size={28} />,
     title: "Diagnosis & Repair",
     description:
-      "Instant diagnostic and repair services for computers and laptops. Whether running slowly or recently crashed, we get you back on track.",
+      "Instant diagnostic and precision repair services for computers and laptops in Rajkot. Whether your device suffered a sudden motherboard power short, broken display hinges, overheating fan failure, or liquid spill, our workshop near Gondal Road Flyover isolates micro-circuit faults accurately. We service all major brands including HP, Dell, Lenovo, Asus, and Acer with honest estimates.",
+    landingHref: "/services/laptop-repair-rajkot",
+    landingText: "Laptop repair details",
     color: "var(--color-accent)",
   },
   {
     icon: <Bug size={28} />,
     title: "Virus & Spyware Removal",
     description:
-      "Round-the-clock protection from viruses, spyware, hacking, phishing, browser hijack, and malware. Regular virus scans scheduled.",
+      "Thorough malware eradication and data protection for computers across Rajkot. We safely remove aggressive trojans, spyware, ransomware, browser hijackers, and deceptive adware without losing your business records or personal files. Our technicians configure active firewall protections, update system security patches, and schedule regular scans so your computer remains protected against future network threats.",
+    landingHref: "/services/virus-removal-rajkot",
+    landingText: "Virus removal details",
     color: "var(--color-teal)",
   },
   {
     icon: <Wifi size={28} />,
     title: "Wireless Networks",
     description:
-      "Configure your wireless router and adapter, secure your network, and show you how to prevent any vulnerabilities.",
+      "Professional WiFi setup, router configuration, and office network management in Rajkot. We configure dual-band wireless routers, expand coverage with mesh access points to eliminate dead zones, and secure your network with modern WPA2/WPA3 encryption. Our team also sets up structured LAN cabling, shared network printers, and network attached storage (NAS) for office teams.",
+    landingHref: "/services/wifi-router-setup-rajkot",
+    landingText: "WiFi setup details",
     color: "var(--color-accent)",
   },
   {
-    icon: <MessageCircle size={28} />,
-    title: "24×7 Quick Response",
+    icon: <Clock size={28} />,
+    title: "Quick Response Service",
+    // TODO(owner): Confirm if any 24/7 emergency service is offered.
     description:
-      "Certified engineers with required parts, local spare parts inventory, rapid fix and restoration with minimal downtime.",
+      "Certified repair engineers with prompt on-site support across Rajkot. Operating Monday through Saturday from 9:00 AM to 9:00 PM, we maintain an extensive inventory of local spare parts including laptop screens, batteries, chargers, and keyboards to restore your damaged device rapidly with minimal downtime for your business or study.",
+    landingHref: "/contact",
+    landingText: "Contact workshop",
     color: "var(--color-teal)",
   },
 ];
@@ -101,7 +125,7 @@ export default function ServicesPage() {
   return (
     <>
       <PageHero
-        title="Our Services"
+        title="Laptop Repair, Virus Removal & Networking in Rajkot"
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "Services" },
@@ -113,13 +137,12 @@ export default function ServicesPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-header">
-              <span className="section-header__label">What We Offer</span>
+              <span className="section-header__label">Comprehensive IT Care</span>
               <h2 className="section-header__title">
-                Our Awesome Services
+                Computer &amp; Laptop Services in Rajkot
               </h2>
               <p className="section-header__subtitle">
-                Comprehensive IT support and repair services for all your
-                technology needs.
+                Reliable doorstep and workshop repair solutions for all major brands, delivered by certified technicians with {YEARS_OF_EXPERIENCE}+ years of experience.
               </p>
             </div>
           </AnimatedSection>
@@ -136,10 +159,26 @@ export default function ServicesPage() {
                   </div>
                   <h3 className={styles.serviceTitle}>{service.title}</h3>
                   <p className={styles.serviceDesc}>{service.description}</p>
-                  <a href="tel:+919426429416" className={styles.servicePhone}>
-                    <Phone size={16} />
-                    Call for service
-                  </a>
+                  <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                    <Link
+                      href={service.landingHref}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "var(--space-1)",
+                        fontSize: "var(--text-sm)",
+                        color: "var(--color-teal)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {service.landingText}
+                      <ArrowRight size={14} />
+                    </Link>
+                    <a href={`tel:${BUSINESS.phone}`} className={styles.servicePhone}>
+                      <Phone size={16} />
+                      Call {BUSINESS.phoneDisplay}
+                    </a>
+                  </div>
                 </div>
               </AnimatedSection>
             ))}
@@ -153,10 +192,14 @@ export default function ServicesPage() {
           <AnimatedSection>
             <div className={styles.ctaContent}>
               <h2 className={styles.ctaTitle}>
-                Do you have any question? Feel free to contact us.
+                Do you have any questions? Feel free to contact us in Rajkot.
               </h2>
-              <Link href="/contact" className="btn btn--primary" style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}>
-                Request for Quote
+              <Link
+                href="/contact"
+                className="btn btn--primary"
+                style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
+              >
+                Request a Quote
                 <ArrowRight size={16} />
               </Link>
             </div>
@@ -169,12 +212,12 @@ export default function ServicesPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-header">
-              <span className="section-header__label">Authorized Support</span>
+              <span className="section-header__label">Brand Resources</span>
               <h2 className="section-header__title">
-                Service Center Details
+                Manufacturer Support Directory
               </h2>
               <p className="section-header__subtitle">
-                Direct toll-free support links for major laptop manufacturers.
+                Official toll-free support links for major laptop brands serviced at our Rajkot workshop.
               </p>
             </div>
           </AnimatedSection>
@@ -184,7 +227,14 @@ export default function ServicesPage() {
               <AnimatedSection key={brand.name} delay={i * 100}>
                 <div className={styles.brandCard}>
                   <div className={styles.brandLogo}>
-                    <img src={brand.logo} alt={`${brand.name} Support`} className={styles.brandImg} />
+                    <Image
+                      src={brand.logo}
+                      alt={`${brand.name} authorized support directory for Rajkot`}
+                      width={140}
+                      height={60}
+                      loading="lazy"
+                      className={styles.brandImg}
+                    />
                   </div>
                   <div className={styles.brandInfo}>
                     <span className={styles.brandLabel}>Toll Free</span>

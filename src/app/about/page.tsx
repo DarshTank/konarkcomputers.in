@@ -1,14 +1,24 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { PageHero } from "@/components/PageHero/PageHero";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
 import { Shield, Quote } from "lucide-react";
 import { YEARS_OF_EXPERIENCE } from "@/lib/constants";
+import { BUSINESS } from "@/lib/business";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "About Us",
-  description:
-    `Learn about Konark Computers — established 1999, experienced PC integrator and maintenance professional in Rajkot, Gujarat. ${YEARS_OF_EXPERIENCE}+ years of trusted IT service.`,
+  metadataBase: new URL(BUSINESS.siteUrl),
+  title: "About Us – Computer Repair Experts Since 1999",
+  description: `Learn about Konark Computers in Rajkot. Founded in 1999 by Omesh Tank, providing ${YEARS_OF_EXPERIENCE}+ years of IT repair & maintenance. Call ${BUSINESS.phoneDisplay}.`,
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Us – Computer Repair Experts Since 1999",
+    description: `Learn about Konark Computers in Rajkot. Founded in 1999 by Omesh Tank, providing ${YEARS_OF_EXPERIENCE}+ years of IT repair & maintenance. Call ${BUSINESS.phoneDisplay}.`,
+    url: "/about",
+  },
 };
 
 const testimonials = [
@@ -55,7 +65,7 @@ const testimonials = [
 const stats = [
   { number: `${YEARS_OF_EXPERIENCE}+`, label: "Years Experience" },
   { number: "500+", label: "Happy Clients" },
-  { number: "24/7", label: "Support Ready" },
+  { number: "Mon–Sat", label: "9 AM – 9 PM Support" },
   { number: "10K+", label: "Repairs Done" },
 ];
 
@@ -76,7 +86,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
-        title="Our Story"
+        title="About Us – Computer Repair Experts Since 1999"
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "About Us" },
@@ -90,14 +100,17 @@ export default function AboutPage() {
             <AnimatedSection direction="left">
               <div className={styles.founderImageWrap}>
                 <div className={styles.founderFrame}>
-                  <img
+                  <Image
                     src="/omesh.png"
-                    alt="Omesh Tank - Founder & PC Integrator"
+                    alt="Omesh Tank, founder of Konark Computers, Rajkot"
+                    width={400}
+                    height={500}
+                    priority
                     className={styles.founderPhoto}
                   />
                   <div className={styles.founderBadge}>
                     <span className={styles.founderName}>Omesh Tank</span>
-                    <span className={styles.founderTitle}>Founder & CEO</span>
+                    <span className={styles.founderTitle}>Founder &amp; CEO</span>
                   </div>
                 </div>
               </div>
@@ -105,22 +118,23 @@ export default function AboutPage() {
 
             <AnimatedSection direction="right">
               <div className={styles.founderContent}>
-                <span className="section-header__label">About Us</span>
+                <span className="section-header__label">Our Heritage in Rajkot</span>
                 <h2 style={{ fontSize: "var(--text-2xl)", marginBottom: "var(--space-6)" }}>
-                  {YEARS_OF_EXPERIENCE}+ Years of Trusted Service
+                  {YEARS_OF_EXPERIENCE}+ Years of Trusted Service in Rajkot
                 </h2>
                 <p>
-                  We would like to introduce ourselves as the well-established,
-                  experienced and efficient PC integrator & Maintenance
-                  Professional. Established in 1999, we have vast experience
-                  maintaining computers and networks for banks, corporate
-                  clients, industrial corporations, hospitals, and educational
-                  institutions & universities.
+                  We are proud to introduce Konark Computers as a well-established,
+                  experienced, and efficient PC integrator &amp; maintenance professional
+                  based in Rajkot, Gujarat. Founded in 1999 by Omesh Tank, we have
+                  extensive experience maintaining computers, laptops, and local networks
+                  for corporate clients, hospitals, educational institutions, colleges,
+                  and industrial units across Rajkot.
                 </p>
                 <p style={{ marginTop: "var(--space-4)" }}>
-                  We feel proud that in such work where knowledge, experience
-                  and rapid complaint response are most important, we didn&apos;t give
-                  our clients a single opportunity to say any word of complaint.
+                  In a domain where deep technical knowledge, hands-on diagnostic experience,
+                  and rapid complaint response matter most, our team has built a reputation
+                  on customer trust and long-term relationships from our central workshop
+                  at 234-Vitt Bhavan, Near Gondal Road Flyover.
                 </p>
                 <p
                   style={{
@@ -163,7 +177,7 @@ export default function AboutPage() {
               <div>
                 <span className="section-header__label">What We Provide</span>
                 <h2 style={{ fontSize: "var(--text-2xl)", marginBottom: "var(--space-6)" }}>
-                  So, What Does Konark Provide Your Company?
+                  What Does Konark Provide Your Company?
                 </h2>
                 <p>
                   Konark provides ongoing and immediate technical support for
@@ -173,9 +187,9 @@ export default function AboutPage() {
                   technology plan based on your business goals and budget.
                 </p>
                 <p style={{ marginTop: "var(--space-4)" }}>
-                  The end result is a happy, productive office with predictable
-                  budget line items. Plans are customized to your company&apos;s
-                  budget, computer usage, and how involved you want to be.
+                  The end result is a productive office with predictable
+                  maintenance costs. Plans are tailored to your company&apos;s
+                  workload, computer count, and desired support frequency.
                 </p>
               </div>
             </AnimatedSection>

@@ -1,73 +1,101 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { PageHero } from "@/components/PageHero/PageHero";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
-import {
-  HardDrive,
-  Cpu,
-  Mouse,
-  Keyboard,
-  BatteryCharging,
-  Monitor,
-  Battery,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, Phone } from "lucide-react";
+import { BUSINESS } from "@/lib/business";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "Products",
-  description:
-    "Computer accessories and laptop parts — Hard Disk, RAM, Mouse, Keyboard, Laptop Charger, Screen, Battery by Konark Computers Rajkot.",
+  metadataBase: new URL(BUSINESS.siteUrl),
+  title: "Laptop Battery, Charger, Screen & Computer Parts in Rajkot",
+  description: `Genuine laptop parts & accessories in Rajkot by Konark Computers. Battery, charger, screen, RAM & SSD with warranty. Call ${BUSINESS.phoneDisplay}.`,
+  alternates: {
+    canonical: "/products",
+  },
+  openGraph: {
+    title: "Laptop Battery, Charger, Screen & Computer Parts in Rajkot",
+    description: `Genuine laptop parts & accessories in Rajkot by Konark Computers. Battery, charger, screen, RAM & SSD with warranty. Call ${BUSINESS.phoneDisplay}.`,
+    url: "/products",
+  },
 };
 
 const products = [
   {
-    name: "Hard Disk",
+    id: "hard-disk",
+    name: "Hard Disk & Solid State Drives (SSD)",
     image: "/harddisk.jpg",
-    description: "Internal & external drives for desktops and laptops",
+    description:
+      "High-speed internal SATA SSDs, ultra-fast NVMe M.2 drives, and high-capacity external backup drives in Rajkot. Upgrading from a mechanical hard drive to an SSD speeds up laptop boot time and daily application response by up to 10x. Compatible with Dell, HP, Lenovo, Asus, and custom PCs.",
     category: "Storage",
+    landingHref: null,
   },
   {
-    name: "RAM",
+    id: "ram",
+    name: "RAM (System Memory)",
     image: "/Ram.jpg",
-    description: "Memory upgrades for faster system performance",
+    description:
+      "High-performance DDR3, DDR4, and DDR5 RAM modules for laptops and desktop computers across Rajkot. Adding extra memory eliminates multitasking bottlenecks, reduces system stutter, and delivers smooth performance for accounting, office software, and multimedia.",
     category: "Memory",
+    landingHref: null,
   },
   {
-    name: "USB Mouse",
+    id: "usb-mouse",
+    name: "USB & Wireless Mouse",
     image: "/moush.jpg",
-    description: "Wired and wireless mice from top brands",
+    description:
+      "Ergonomic wired USB optical mice and wireless mice from leading brands. Designed for comfortable palm support during long office hours, responsive optical tracking, and durable click longevity for home and business workstations in Rajkot.",
     category: "Peripherals",
+    landingHref: null,
   },
   {
-    name: "Keyboard",
+    id: "keyboard",
+    name: "USB & Wireless Keyboard",
     image: "/keybord.jpg",
-    description: "USB and wireless keyboards for all setups",
+    description:
+      "Tactile USB desktop keyboards and wireless combo units built for dependable everyday typing. Featuring clear lettering, responsive membrane switches, and spill-resistant construction suited for retail billing, offices, and students in Rajkot.",
     category: "Peripherals",
+    landingHref: null,
   },
   {
-    name: "Laptop Charger",
+    id: "laptop-charger",
+    name: "Laptop Charger & Power Adapters",
     image: "/gallery_1.jpg",
-    description: "Original and compatible chargers for all laptop brands",
+    description:
+      "Certified original and high-compatibility laptop chargers with built-in surge protection and replacement warranty in Rajkot. We stock round barrel tips, slim tips, and USB Type-C chargers for HP, Dell, Lenovo, Asus, and Acer laptops.",
     category: "Laptop Parts",
+    landingHref: "/products/laptop-charger-rajkot",
+    landingLabel: "View charger details & stock",
   },
   {
-    name: "Laptop Screen",
+    id: "laptop-screen",
+    name: "Laptop Screen & Display Panels",
     image: "/leptopscrren.jpg",
-    description: "LCD and LED replacement screens for all models",
+    description:
+      "Original Grade-A LED and LCD laptop replacement screens in Rajkot. We replace cracked, ink-bleeding, or flickering screens across all standard sizes including 14.0-inch and 15.6-inch HD and Full HD IPS panels with warranty.",
     category: "Laptop Parts",
+    landingHref: "/products/laptop-screen-replacement-rajkot",
+    landingLabel: "View screen replacement service",
   },
   {
-    name: "Laptop Battery",
+    id: "laptop-battery",
+    name: "Laptop Battery Replacement",
     image: "/leptopbattry.jpg",
-    description: "Genuine and compatible batteries for extended life",
+    description:
+      "Genuine and high-capacity replacement laptop batteries with warranty for extended operating life in Rajkot. Engineered with grade-A lithium cells and safety overcharge protection for Dell, HP, Lenovo, Acer, and Asus laptops.",
     category: "Laptop Parts",
+    landingHref: "/products/laptop-battery-rajkot",
+    landingLabel: "View battery replacement details",
   },
   {
-    name: "Laptop Keyboard",
+    id: "laptop-keyboard",
+    name: "Laptop Replacement Keyboard",
     image: "/leptopkey.jpg",
-    description: "Replacement keyboards for all laptop brands",
+    description:
+      "Direct-fit OEM replacement keyboards for laptops in Rajkot. Resolve unresponsive keys, liquid spill faults, or broken keycaps across Dell Inspiron, HP Pavilion, Lenovo IdeaPad, Acer Aspire, and Asus laptops with replacement warranty.",
     category: "Laptop Parts",
+    landingHref: null,
   },
 ];
 
@@ -75,7 +103,7 @@ export default function ProductsPage() {
   return (
     <>
       <PageHero
-        title="Our Products"
+        title="Laptop Battery, Charger, Screen & Computer Parts in Rajkot"
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "Products" },
@@ -87,33 +115,57 @@ export default function ProductsPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-header">
-              <span className="section-header__label">What We Sell</span>
+              <span className="section-header__label">Hardware Catalog</span>
               <h2 className="section-header__title">
-                Quality Computer Parts & Accessories
+                Quality Computer Parts &amp; Accessories in Rajkot
               </h2>
               <p className="section-header__subtitle">
-                Genuine and compatible parts for all major laptop and desktop
-                brands at competitive prices.
+                Genuine and compatible parts for all major laptop and desktop brands with warranty support at our Gondal Road workshop.
               </p>
             </div>
           </AnimatedSection>
 
           <div className={styles.productGrid}>
             {products.map((product, i) => (
-              <AnimatedSection key={product.name} delay={i * 70}>
-                <div className={styles.productCard}>
+              <AnimatedSection key={product.id} delay={i * 70}>
+                <div className={styles.productCard} id={product.id}>
                   <span className={styles.productCategory}>
                     {product.category}
                   </span>
                   <div className={styles.productImageWrap}>
-                    <img src={product.image} alt={product.name} className={styles.productImg} />
+                    <Image
+                      src={product.image}
+                      alt={`${product.name} available at Konark Computers Rajkot`}
+                      width={400}
+                      height={300}
+                      loading="lazy"
+                      className={styles.productImg}
+                    />
                   </div>
                   <h3 className={styles.productName}>{product.name}</h3>
                   <p className={styles.productDesc}>{product.description}</p>
-                  <a href="tel:+919426429416" className={styles.productCta}>
-                    Enquire Now
-                    <ArrowRight size={14} />
-                  </a>
+                  <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                    {product.landingHref && (
+                      <Link
+                        href={product.landingHref}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "var(--space-1)",
+                          fontSize: "var(--text-xs)",
+                          color: "var(--color-teal)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {product.landingLabel}
+                        <ArrowRight size={12} />
+                      </Link>
+                    )}
+                    <a href={`tel:${BUSINESS.phone}`} className={styles.productCta}>
+                      <Phone size={14} />
+                      Enquire: {BUSINESS.phoneDisplay}
+                    </a>
+                  </div>
                 </div>
               </AnimatedSection>
             ))}
@@ -127,10 +179,14 @@ export default function ProductsPage() {
           <AnimatedSection>
             <div className={styles.ctaContent}>
               <h2 className={styles.ctaTitle}>
-                Looking for a specific part? Request a quote today.
+                Looking for a specific spare part in Rajkot? Request a quote today.
               </h2>
-              <Link href="/contact" className="btn btn--primary" style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}>
-                Request for Quote
+              <Link
+                href="/contact"
+                className="btn btn--primary"
+                style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
+              >
+                Request a Quote
                 <ArrowRight size={16} />
               </Link>
             </div>

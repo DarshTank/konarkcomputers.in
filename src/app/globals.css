@@ -3,8 +3,7 @@
    "Precision Workshop" — Technical precision meets warm craftsmanship
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&display=swap');
+/* ── Google Fonts loaded via next/font in layout.tsx for zero-layout-shift and performance ── */
 
 /* ── CSS Custom Properties (Design Tokens) ── */
 :root {
@@ -32,8 +31,8 @@
   --color-error: #e74c3c;
 
   /* Typography */
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-display: var(--font-dm-serif, 'DM Serif Display', Georgia, serif);
+  --font-body: var(--font-manrope, 'Manrope', system-ui, sans-serif);
 
   /* Type Scale (fluid) */
   --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);

@@ -1,6 +1,6 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Phone,
   Monitor,
@@ -8,13 +8,31 @@ import {
   Wrench,
   Wifi,
   ArrowRight,
-  Zap,
+  ShieldCheck,
+  Battery,
+  BatteryCharging,
+  Cpu,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
 import { ClientsCarousel } from "@/components/ClientsCarousel/ClientsCarousel";
 import { GoogleReviews } from "@/components/GoogleReviews/GoogleReviews";
+import { BUSINESS } from "@/lib/business";
 import { YEARS_OF_EXPERIENCE } from "@/lib/constants";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(BUSINESS.siteUrl),
+  title: "Computer & Laptop Repair in Rajkot | Konark Computers – Since 1999",
+  description: `Computer & laptop repair in Rajkot since 1999. ${YEARS_OF_EXPERIENCE}+ years of trusted IT support, chip-level service & parts. Call +91 942 642 9416 for doorstep service.`,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Computer & Laptop Repair in Rajkot | Konark Computers – Since 1999",
+    description: `Computer & laptop repair in Rajkot since 1999. ${YEARS_OF_EXPERIENCE}+ years of trusted IT support, chip-level service & parts. Call +91 942 642 9416.`,
+    url: "/",
+  },
+};
 
 const highlights = [
   {
@@ -43,6 +61,58 @@ const highlights = [
   },
 ];
 
+const localServices = [
+  {
+    title: "Laptop Repair in Rajkot",
+    description:
+      "Expert chip-level laptop repair, motherboard diagnostics, heating resolution, and hinge repairs for Dell, HP, Lenovo, Asus, and Acer laptops.",
+    href: "/services/laptop-repair-rajkot",
+    icon: <Wrench size={28} />,
+  },
+  {
+    title: "Computer & Desktop Repair",
+    description:
+      "Complete desktop PC troubleshooting, power supply repair, motherboard testing, OS installation, and custom PC optimization in Rajkot.",
+    href: "/services/computer-repair-rajkot",
+    icon: <Cpu size={28} />,
+  },
+  {
+    title: "Virus & Spyware Removal",
+    description:
+      "Thorough malware cleanup, adware removal, browser hijack eradication, and security software installation to protect your personal and business data.",
+    href: "/services/virus-removal-rajkot",
+    icon: <ShieldCheck size={28} />,
+  },
+  {
+    title: "WiFi & Router Setup",
+    description:
+      "Wireless network installation, range extension, Wi-Fi security hardening, and stable office LAN connectivity setup across Rajkot.",
+    href: "/services/wifi-router-setup-rajkot",
+    icon: <Wifi size={28} />,
+  },
+  {
+    title: "Laptop Battery Replacement",
+    description:
+      "Genuine and high-compatibility replacement laptop batteries with warranty for Dell, HP, Lenovo, Acer, and Asus in Rajkot.",
+    href: "/products/laptop-battery-rajkot",
+    icon: <Battery size={28} />,
+  },
+  {
+    title: "Laptop Charger & Adapters",
+    description:
+      "Original power adapters and high-grade laptop chargers with correct voltage, surge protection, and replacement warranty.",
+    href: "/products/laptop-charger-rajkot",
+    icon: <BatteryCharging size={28} />,
+  },
+  {
+    title: "Laptop Screen Replacement",
+    description:
+      "Cracked, blank, or flickering laptop screen panel replacement using premium grade LCD and LED panels with rapid turnaround.",
+    href: "/products/laptop-screen-replacement-rajkot",
+    icon: <Monitor size={28} />,
+  },
+];
+
 const processSteps = [
   {
     number: "01",
@@ -66,6 +136,40 @@ const processSteps = [
   },
 ];
 
+const faqs = [
+  {
+    question: "Do you provide doorstep computer and laptop repair in Rajkot?",
+    answer:
+      "Yes, Konark Computers provides prompt on-site and doorstep inspection across Rajkot. For common software issues, network configurations, or routine servicing, our technician resolves the problem at your premises. For intricate chip-level repairs, we handle the device safely in our Gondal Road workshop.",
+  },
+  {
+    question: "Which laptop and computer brands do you service?",
+    answer:
+      "We provide expert repair and genuine spare parts for all major brands in Rajkot including HP, Dell, Lenovo, Asus, Acer, Sony, Samsung, and Toshiba. We service both modern ultra-thin laptops and traditional desktop computers.",
+  },
+  {
+    question: "Can you eliminate viruses and speed up an old or slow computer?",
+    answer:
+      "Yes. We clear harmful malware, adware, spyware, and background bloatware, resolve system crashes, and optimize startup processes. We also install SSD upgrades and additional RAM which frequently makes older computers 5 to 10 times faster.",
+  },
+  {
+    question: "Do you stock genuine laptop chargers, batteries, and screens?",
+    answer:
+      "Yes. We carry high-quality original and compatible laptop batteries, chargers, LED/LCD screens, keyboards, RAM modules, and storage drives for all popular models. All replacement parts come with dedicated warranty support.",
+  },
+  {
+    question: "What are your working hours and where is your shop located?",
+    answer:
+      "Our repair centre is conveniently located at 234-Vitt Bhavan, Near Gondal Road Flyover, Rajkot, Gujarat 360002. We are open Monday through Saturday from 9:00 AM to 9:00 PM.",
+  },
+  {
+    question: "How much does laptop repair cost and what is the turnaround time?",
+    answer:
+      "Costs and repair turnaround times depend on whether the issue is software-related or requires chip-level hardware replacement. We inspect your device first and provide an upfront, transparent estimate before carrying out any work.",
+    // TODO(owner): Add specific standard inspection charges or turnaround times if desired.
+  },
+];
+
 export default function HomePage() {
   return (
     <>
@@ -81,14 +185,14 @@ export default function HomePage() {
           </AnimatedSection>
           <AnimatedSection delay={200}>
             <h1 className={styles.heroTitle}>
-              Precision Care
+              Computer &amp; Laptop Repair
               <br />
-              <span className={styles.heroTitleAccent}>for your Digital World</span>
+              <span className={styles.heroTitleAccent}>in Rajkot — Since 1999</span>
             </h1>
           </AnimatedSection>
           <AnimatedSection delay={350}>
             <p className={styles.heroSubtitle}>
-              Master computer &amp; laptop repair, chip-level diagnostics, and dedicated IT maintenance with {YEARS_OF_EXPERIENCE}+ years of trusted service across Rajkot.
+              Master computer &amp; laptop repair in Rajkot, chip-level diagnostics, original spare parts, and dedicated IT maintenance with {YEARS_OF_EXPERIENCE}+ years of trusted service.
             </p>
           </AnimatedSection>
           <AnimatedSection delay={500}>
@@ -129,6 +233,40 @@ export default function HomePage() {
                   <div className={styles.highlightIcon}>{item.icon}</div>
                   <h3 className={styles.highlightTitle}>{item.title}</h3>
                   <p className={styles.highlightDesc}>{item.description}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════ SERVICES WE OFFER IN RAJKOT ══════════ */}
+      <section className={`section ${styles.localServices}`}>
+        <div className="container">
+          <AnimatedSection>
+            <div className="section-header">
+              <span className="section-header__label">Local Repair Expertise</span>
+              <h2 className="section-header__title">
+                Services We Offer in Rajkot
+              </h2>
+              <p className="section-header__subtitle">
+                Specialized computer, laptop, and networking repair services delivered by certified engineers with over {YEARS_OF_EXPERIENCE} years of experience.
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className={styles.highlightGrid}>
+            {localServices.map((service, i) => (
+              <AnimatedSection key={service.title} delay={i * 80}>
+                <div className={styles.highlightCard}>
+                  <Link href={service.href} className={styles.serviceLinkCard}>
+                    <div className={styles.highlightIcon}>{service.icon}</div>
+                    <h3 className={styles.highlightTitle}>{service.title}</h3>
+                    <p className={styles.highlightDesc}>{service.description}</p>
+                    <span className={styles.serviceCardArrow}>
+                      View service details <ArrowRight size={14} />
+                    </span>
+                  </Link>
                 </div>
               </AnimatedSection>
             ))}
@@ -216,7 +354,13 @@ export default function HomePage() {
             <AnimatedSection direction="left">
               <div className={styles.experienceCounter}>
                 <div className={styles.founderHomeCard}>
-                  <img src="/omesh.png" alt="Omesh Tank - Founder" className={styles.founderHomePhoto} />
+                  <Image
+                    src="/omesh.png"
+                    alt="Omesh Tank, founder of Konark Computers, Rajkot"
+                    width={140}
+                    height={140}
+                    className={styles.founderHomePhoto}
+                  />
                   <div>
                     <span className={styles.counterNumber}>{YEARS_OF_EXPERIENCE}+</span>
                     <span className={styles.counterLabel}>
@@ -237,7 +381,7 @@ export default function HomePage() {
                   Established in 1999, we have vast experience maintaining
                   computers and networks for banks, corporate clients,
                   industrial corporations, hospitals, and educational
-                  institutions.
+                  institutions across Rajkot and Saurashtra.
                 </p>
                 <p style={{ marginTop: "var(--space-4)" }}>
                   We feel proud that in work where knowledge, experience, and
@@ -256,6 +400,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ══════════ FREQUENTLY ASKED QUESTIONS ══════════ */}
+      <section className={`section ${styles.faqSection}`}>
+        <div className="container">
+          <AnimatedSection>
+            <div className="section-header">
+              <span className="section-header__label">Got Questions?</span>
+              <h2 className="section-header__title">
+                Frequently Asked Questions
+              </h2>
+              <p className="section-header__subtitle">
+                Clear and honest answers regarding our computer repair services, parts, and support in Rajkot.
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className={styles.faqGrid}>
+            {faqs.map((faq, i) => (
+              <AnimatedSection key={faq.question} delay={i * 80}>
+                <div className={styles.faqCard}>
+                  <h3 className={styles.faqQuestion}>{faq.question}</h3>
+                  <p className={styles.faqAnswer}>{faq.answer}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ══════════ GOOGLE REVIEWS ══════════ */}
       <GoogleReviews />
 
@@ -270,7 +442,7 @@ export default function HomePage() {
               <div>
                 <h2 className={styles.ctaTitle}>Need Help? Call Us Today</h2>
                 <p className={styles.ctaSubtitle}>
-                  Free quotes and fast doorstep service — we&apos;re just a call away.
+                  Free quotes and fast doorstep service across Rajkot — we&apos;re just a call away.
                 </p>
               </div>
               <div className={styles.ctaActions}>
@@ -283,7 +455,11 @@ export default function HomePage() {
                     </span>
                   </div>
                 </a>
-                <Link href="/contact" className="btn btn--primary" style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}>
+                <Link
+                  href="/contact"
+                  className="btn btn--primary"
+                  style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
+                >
                   Get a Quote
                   <ArrowRight size={16} />
                 </Link>

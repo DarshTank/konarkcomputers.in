@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, Phone, MapPin, Clock } from "lucide-react";
+import { BUSINESS } from "@/lib/business";
 import styles from "./Navbar.module.css";
 
 const navLinks = [
@@ -42,20 +43,20 @@ export function Navbar() {
           <div className={styles.topBarItem}>
             <MapPin size={14} />
             <a
-              href="https://www.google.com/maps?ll=22.277962,70.798489&z=14&t=m&hl=en-US&gl=US&mapclient=embed&cid=1162576568112931297"
+              href={BUSINESS.googleMapsPlaceUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
-              234-Vitt Bhavan, Gondal Road, Rajkot
+              {BUSINESS.address.street}, {BUSINESS.address.city}
             </a>
           </div>
           <div className={styles.topBarItem}>
             <Phone size={14} />
-            <a href="tel:+919426429416">+91 942 642 9416</a>
+            <a href={`tel:${BUSINESS.phone}`}>{BUSINESS.phoneDisplay}</a>
           </div>
           <div className={styles.topBarItem}>
             <Clock size={14} />
-            <span>Mon – Sat: 9:00 AM – 9:00 PM</span>
+            <span>{BUSINESS.hoursDisplay}</span>
           </div>
           <div className={styles.topBarBadge}>
             <img src="/MSME-e1452579997430.png" alt="MSME Registered" className={styles.msmeImg} />

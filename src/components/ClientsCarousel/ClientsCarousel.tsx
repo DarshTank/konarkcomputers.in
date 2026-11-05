@@ -21,18 +21,36 @@ export function ClientsCarousel() {
     <section className={styles.clientsSection}>
       <div className="container">
         <div className={styles.header}>
-          <span className={styles.label}>Corporate & Government Partners</span>
+          <span className={styles.label}>Corporate &amp; Government Partners</span>
           <h2 className={styles.title}>Our Clients</h2>
         </div>
 
         {/* Infinite Scroll Logo Marquee */}
         <div className={styles.marqueeWrapper}>
           <div className={styles.marqueeTrack}>
-            {[...clientLogos, ...clientLogos].map((client, index) => (
-              <div key={index} className={styles.clientItem}>
+            {/* Primary set indexed by search engines and screen readers */}
+            {clientLogos.map((client, index) => (
+              <div key={`primary-${index}`} className={styles.clientItem}>
                 <img
                   src={client.src}
-                  alt={client.name}
+                  alt={`${client.name} – client of Konark Computers`}
+                  loading="lazy"
+                  className={styles.clientLogo}
+                />
+              </div>
+            ))}
+
+            {/* Duplicate set for infinite marquee animation, hidden from crawlers and screen readers */}
+            {clientLogos.map((client, index) => (
+              <div
+                key={`dup-${index}`}
+                className={styles.clientItem}
+                aria-hidden="true"
+              >
+                <img
+                  src={client.src}
+                  alt=""
+                  loading="lazy"
                   className={styles.clientLogo}
                 />
               </div>

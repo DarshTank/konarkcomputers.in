@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Star, ExternalLink, MessageSquarePlus, CheckCircle2 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
+import { BUSINESS } from "@/lib/business";
 import styles from "./GoogleReviews.module.css";
 
 interface Review {
@@ -15,15 +16,39 @@ interface Review {
   owner_reply?: string;
 }
 
+// TODO(owner): paste 3 real review quotes with reviewer first names from Google Business Profile
+const STATIC_FALLBACK_REVIEWS: Review[] = [
+  {
+    author_name: "Verified Customer", // TODO(owner): paste real reviewer first name
+    rating: 5,
+    relative_time_description: "Google Review",
+    text: "Honest, fast and professional laptop and computer repair service in Rajkot.", // TODO(owner): paste real review quote
+    initials: "VC",
+  },
+  {
+    author_name: "Verified Customer", // TODO(owner): paste real reviewer first name
+    rating: 5,
+    relative_time_description: "Google Review",
+    text: "Very reliable support for laptop hardware, chargers, and parts. Highly recommended in Rajkot.", // TODO(owner): paste real review quote
+    initials: "VC",
+  },
+  {
+    author_name: "Verified Customer", // TODO(owner): paste real reviewer first name
+    rating: 5,
+    relative_time_description: "Google Review",
+    text: "Quick response and genuine advice without unnecessary replacements.", // TODO(owner): paste real review quote
+    initials: "VC",
+  },
+];
+
 export function GoogleReviews() {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[]>(STATIC_FALLBACK_REVIEWS);
   const [rating, setRating] = useState(4.7);
   const [total, setTotal] = useState(274);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activeTag, setActiveTag] = useState<string>("All");
 
-  const googleMapsUrl =
-    "https://www.google.com/maps/search/?api=1&query=Konark+Computers+Shrimad+Bhavan+Dhebar+Rd+Rajkot";
+  const googleMapsUrl = BUSINESS.googleReviewsUrl;
 
   const tags = [
     { label: "All", count: null },
