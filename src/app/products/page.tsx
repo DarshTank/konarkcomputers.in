@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PageHero } from "@/components/PageHero/PageHero";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
-import { ArrowRight, Phone } from "lucide-react";
+import { ArrowRight, Phone, Plus } from "lucide-react";
 import { BUSINESS } from "@/lib/business";
 import styles from "./page.module.css";
 
@@ -161,9 +161,23 @@ export default function ProductsPage() {
                         <ArrowRight size={12} />
                       </Link>
                     )}
+                    <Link
+                      href="/quote"
+                      className="btn btn--primary"
+                      style={{
+                        padding: "8px 16px",
+                        minHeight: "36px",
+                        fontSize: "var(--text-xs)",
+                        width: "100%",
+                        gap: "6px",
+                      }}
+                    >
+                      <Plus size={14} />
+                      Add to quote
+                    </Link>
                     <a href={`tel:${BUSINESS.phone}`} className={styles.productCta}>
                       <Phone size={14} />
-                      Enquire: {BUSINESS.phoneDisplay}
+                      Call: {BUSINESS.phoneDisplay}
                     </a>
                   </div>
                 </div>
@@ -179,14 +193,14 @@ export default function ProductsPage() {
           <AnimatedSection>
             <div className={styles.ctaContent}>
               <h2 className={styles.ctaTitle}>
-                Looking for a specific spare part in Rajkot? Request a quote today.
+                Need an immediate formal estimate? Build your quote online.
               </h2>
               <Link
-                href="/contact"
+                href="/quote"
                 className="btn btn--primary"
                 style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
               >
-                Request a Quote
+                Instant Quotation Builder
                 <ArrowRight size={16} />
               </Link>
             </div>

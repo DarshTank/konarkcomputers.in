@@ -47,8 +47,8 @@ const services = [
     title: "Speed & Optimization",
     description:
       "If your computer or laptop takes minutes to boot or stutters during routine multitasking, our system tuning restores snappy responsiveness. We clear temporary system caches, clean startup bloatware, fix corrupted registry keys, and eliminate hidden adware. For older systems, we install high-speed SSDs and dual-channel RAM upgrades in Rajkot that deliver instant performance boosts.",
-    landingHref: "/services/computer-repair-rajkot",
-    landingText: "PC upgrade details",
+    landingHref: "/services/ssd-upgrade-rajkot",
+    landingText: "SSD upgrade details",
     color: "var(--color-teal)",
   },
   {

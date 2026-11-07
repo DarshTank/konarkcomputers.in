@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAllowedAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'darshtank05@gmail.com' ||
+        request.auth.token.email == 'omni1715@gmail.com'
+      );
+    }
+
+    function isAdmin() {
+      return isAllowedAdmin() || (isAuthenticated() && request.auth.token.role == 'admin');
+    }
+
+    function isStaff() {
+      return isAllowedAdmin() || (isAuthenticated() && (request.auth.token.role == 'admin' || request.auth.token.role == 'staff'));
+    }
+
+    // Public catalog collections (categories, brands, attributeDefinitions, products, services)
+    // Only active items are publicly readable. Client WRITES ARE BLOCKED COMPLETELY (writes happen via admin server API).
+    match /categories/{categoryId} {
+      allow read: if resource.data.isActive == true || isStaff();
+      allow write: if false; // server-only via firebase-admin
+    }
+
+    match /brands/{brandId} {
+      allow read: if resource.data.isActive == true || isStaff();
+      allow write: if false;
+    }
+
+    match /attributeDefinitions/{attrId} {
+      allow read: if true; // attributes are public for filter discovery
+      allow write: if false;
+    }
+
+    match /products/{productId} {
+      allow read: if resource.data.isActive == true || isStaff();
+      allow write: if false;
+    }
+
+    match /services/{serviceId} {
+      allow read: if resource.data.isActive == true || isStaff();
+      allow write: if false;
+    }
+
+    match /compatibilityRules/{ruleId} {
+      allow read: if resource.data.isActive == true || isStaff();
+      allow write: if false;
+    }
+
+    // Public settings (tax, company) are read-only
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Quotes are NEVER publicly readable from client SDK.
+    // They are accessed strictly via server route using the publicToken or by authenticated staff/admin.
+    match /quotes/{quoteId} {
+      allow read: if isStaff();
+      allow write: if false; // All quote operations through server API
+    }
+
+    // Counters, users, adminAudit are completely locked to clients
+    match /counters/{counterId} {
+      allow read, write: if false;
+    }
+
+    match /adminAudit/{auditId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow write: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

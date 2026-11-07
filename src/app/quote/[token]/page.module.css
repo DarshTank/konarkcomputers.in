@@ -1,0 +1,276 @@
+/* Quotation Token Page Styles */
+.quoteViewPage {
+  background-color: var(--color-surface);
+  min-height: calc(100vh - 105px);
+  padding: var(--space-8) 0 var(--space-20);
+}
+
+.paperCard {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.topBar {
+  background: var(--color-dark);
+  color: var(--color-text-on-dark);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  border-bottom: 3px solid var(--color-accent);
+}
+
+.brandBlock h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-white);
+  margin-bottom: 2px;
+}
+
+.brandSubtitle {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.quoteMeta {
+  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--color-text-on-dark-muted);
+}
+
+.quoteNumber {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 4px;
+}
+
+.actionBar {
+  background: var(--color-surface-warm);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-4) var(--space-8);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.actionBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.contentPad {
+  padding: var(--space-8);
+}
+
+.partiesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.partyCol h3 {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-teal);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.partyName {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 4px;
+}
+
+.partyDetails {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--space-6);
+}
+
+.itemTable {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.itemTable th {
+  background: var(--color-surface-warm);
+  color: var(--color-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.itemTable td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-dark);
+}
+
+.totalsBox {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-8);
+}
+
+.totalsTable {
+  width: 320px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--color-surface-warm);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.totalLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.grandTotalLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--color-dark);
+  border-top: 2px solid var(--color-dark);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.termsCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  border-left: 4px solid var(--color-teal);
+}
+
+.termsTitle {
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN (Tablets & Mobile Phones)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .quoteViewPage {
+    padding: var(--space-4) 0 var(--space-12);
+  }
+
+  .paperCard {
+    border-radius: var(--radius-lg);
+  }
+
+  .topBar {
+    padding: var(--space-4) var(--space-5);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .quoteMeta {
+    text-align: left;
+    width: 100%;
+  }
+
+  .quoteMeta > div:nth-child(2) {
+    justify-content: flex-start !important;
+  }
+
+  .actionBar {
+    padding: var(--space-3) var(--space-4);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .actionBtns {
+    width: 100%;
+  }
+
+  .actionBtns > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .contentPad {
+    padding: var(--space-4);
+  }
+
+  .partiesGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+  }
+
+  .totalsBox {
+    justify-content: stretch;
+  }
+
+  .totalsTable {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .brandBlock h1 {
+    font-size: var(--text-xl);
+  }
+
+  .quoteNumber {
+    font-size: var(--text-base);
+  }
+
+  .contentPad {
+    padding: 12px;
+  }
+
+  .termsCard {
+    padding: var(--space-3);
+  }
+}

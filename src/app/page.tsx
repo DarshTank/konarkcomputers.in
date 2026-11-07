@@ -12,6 +12,7 @@ import {
   Battery,
   BatteryCharging,
   Cpu,
+  HardDrive,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
 import { ClientsCarousel } from "@/components/ClientsCarousel/ClientsCarousel";
@@ -110,6 +111,13 @@ const localServices = [
       "Cracked, blank, or flickering laptop screen panel replacement using premium grade LCD and LED panels with rapid turnaround.",
     href: "/products/laptop-screen-replacement-rajkot",
     icon: <Monitor size={28} />,
+  },
+  {
+    title: "SSD Upgrade & Installation",
+    description:
+      "Transform slow laptops and desktop PCs with lightning-fast NVMe M.2 and SATA SSD upgrades, seamless data cloning, and warranty in Rajkot.",
+    href: "/services/ssd-upgrade-rajkot",
+    icon: <HardDrive size={28} />,
   },
 ];
 
@@ -210,7 +218,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════ HIGHLIGHTS ══════════ */}
+      {/* ══════════ HIGHLIGHTS ══════════
       <section className={`section ${styles.highlights}`}>
         <div className="container">
           <AnimatedSection>
@@ -238,19 +246,23 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ══════════ SERVICES WE OFFER IN RAJKOT ══════════ */}
       <section className={`section ${styles.localServices}`}>
         <div className="container">
           <AnimatedSection>
             <div className="section-header">
-              <span className="section-header__label">Local Repair Expertise</span>
+              <span className="section-header__label">What We Do</span>
               <h2 className="section-header__title">
                 Services We Offer in Rajkot
               </h2>
               <p className="section-header__subtitle">
-                Specialized computer, laptop, and networking repair services delivered by certified engineers with over {YEARS_OF_EXPERIENCE} years of experience.
+                Fast and Easy Support at Your Doorstep
+              </p>
+              <p className="section-header__subtitle">
+                Online and on-site support for your computer and laptop — all
+                brands, all problems, all solved.
               </p>
             </div>
           </AnimatedSection>

@@ -19,6 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Dedicated Search Intent Landing Pages
     { path: "/services/laptop-repair-rajkot", priority: 0.8, changeFrequency: "monthly" },
     { path: "/services/computer-repair-rajkot", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/services/ssd-upgrade-rajkot", priority: 0.8, changeFrequency: "monthly" },
     { path: "/services/virus-removal-rajkot", priority: 0.8, changeFrequency: "monthly" },
     { path: "/services/wifi-router-setup-rajkot", priority: 0.8, changeFrequency: "monthly" },
     { path: "/products/laptop-battery-rajkot", priority: 0.8, changeFrequency: "monthly" },
