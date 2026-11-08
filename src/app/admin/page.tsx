@@ -1,32 +1,36 @@
 import React from 'react';
 import Link from 'next/link';
 import { getActiveCatalog } from '@/lib/db/catalog';
-import { getAdminDb } from '@/lib/firebase/admin';
+import { listQuotes } from '@/lib/db/quotes';
 import type { Quote } from '@/lib/db/types';
 import { formatPaise } from '@/lib/pricing/calculator';
 import {
   FileSpreadsheet,
   AlertTriangle,
   Package,
-  CheckCircle2,
   Clock,
-  ArrowRight,
-  TrendingUp,
 } from 'lucide-react';
 import styles from './admin.module.css';
+import { QuoteVisibilityToggle } from './components/QuoteVisibilityToggle';
 
 export const dynamic = 'force-dynamic';
+
+function formatDateShort(seconds?: number): string {
+  if (!seconds) return '-';
+  const d = new Date(seconds * 1000);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
 
 export default async function AdminDashboardPage() {
   const catalog = await getActiveCatalog();
 
+  // Fetch quotes from all storage layers (Firestore + disk + memory)
   let quotes: Quote[] = [];
   try {
-    const db = getAdminDb();
-    if (db) {
-      const snap = await db.collection('quotes').orderBy('createdAt.seconds', 'desc').limit(10).get();
-      quotes = snap.docs.map((d) => d.data() as Quote);
-    }
+    quotes = await listQuotes(50);
   } catch (e) {
     console.warn('Could not read quotes for dashboard:', e);
   }
@@ -36,6 +40,7 @@ export default async function AdminDashboardPage() {
   );
 
   const newQuotesCount = quotes.filter((q) => q.status === 'new').length;
+  const recentQuotes = quotes.slice(0, 10);
 
   return (
     <div>
@@ -56,6 +61,9 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className={styles.adminContent}>
+        {/* Public Quotation System Visibility Controller */}
+        <QuoteVisibilityToggle initialEnabled={catalog.quoteSettings?.enabled !== false} />
+
         {/* KPI Stats Grid */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
@@ -159,47 +167,107 @@ export default async function AdminDashboardPage() {
               View All Quotes
             </Link>
           </div>
-          {quotes.length > 0 ? (
+          {recentQuotes.length > 0 ? (
             <div style={{ overflowX: 'auto' }}>
               <table className={styles.dataTable}>
                 <thead>
                   <tr>
                     <th>Quote #</th>
+                    <th>Date</th>
                     <th>Customer</th>
                     <th>Phone</th>
-                    <th>State</th>
                     <th>Items</th>
-                    <th>Total</th>
+                    <th>Grand Total</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {quotes.map((q) => (
+                  {recentQuotes.map((q) => (
                     <tr key={q.id}>
                       <td>
-                        <strong>{q.quoteNumber}</strong>
+                        <strong style={{ color: '#0055ff', fontSize: '0.82rem' }}>
+                          {q.quoteNumber}
+                        </strong>
                       </td>
-                      <td>{q.customer.name}</td>
-                      <td>{q.customer.phone}</td>
-                      <td>{q.customer.stateName}</td>
-                      <td>{q.items.length} items</td>
-                      <td>
-                        <strong>{formatPaise(q.totals.grandTotalPaise)}</strong>
+                      <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                        {formatDateShort(q.createdAt?.seconds)}
                       </td>
                       <td>
-                        <span className={`${styles.statusPill} ${styles.statusActive}`}>
+                        <strong>{q.customer?.name}</strong>
+                        {q.customer?.company && (
+                          <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                            {q.customer.company}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <a
+                          href={`tel:${q.customer?.phone}`}
+                          style={{ color: 'var(--color-teal)', fontSize: '0.82rem' }}
+                        >
+                          {q.customer?.phone}
+                        </a>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.78rem' }}>
+                          {q.items?.length || 0} items
+                          <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '2px' }}>
+                            {q.items
+                              ?.slice(0, 2)
+                              .map((it) => it.name)
+                              .join(', ')}
+                            {(q.items?.length || 0) > 2 && '...'}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <strong>{formatPaise(q.totals?.grandTotalPaise || 0)}</strong>
+                      </td>
+                      <td>
+                        <span
+                          className={styles.statusPill}
+                          style={{
+                            background:
+                              q.status === 'converted'
+                                ? '#dcfce7'
+                                : q.status === 'cancelled'
+                                ? '#fee2e2'
+                                : q.status === 'new'
+                                ? '#e0f2fe'
+                                : '#fef3c7',
+                            color:
+                              q.status === 'converted'
+                                ? '#166534'
+                                : q.status === 'cancelled'
+                                ? '#991b1b'
+                                : q.status === 'new'
+                                ? '#0369a1'
+                                : '#92400e',
+                          }}
+                        >
                           {q.status}
                         </span>
                       </td>
                       <td>
-                        <Link
-                          href={`/quote/${q.publicToken}`}
-                          target="_blank"
-                          className={styles.actionBtn}
-                        >
-                          View
-                        </Link>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <Link
+                            href={`/quote/${q.publicToken}`}
+                            target="_blank"
+                            className={styles.actionBtn}
+                            title="View Quotation"
+                          >
+                            View
+                          </Link>
+                          <a
+                            href={`/api/quotes/${q.publicToken}/pdf`}
+                            download
+                            className={styles.actionBtn}
+                            title="Download PDF"
+                          >
+                            PDF
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -78,6 +78,13 @@ const localServices = [
     icon: <Cpu size={28} />,
   },
   {
+    title: "SSD Upgrade & Installation",
+    description:
+      "Transform slow laptops and desktop PCs with lightning-fast NVMe M.2 and SATA SSD upgrades, seamless data cloning, and warranty in Rajkot.",
+    href: "/services/ssd-upgrade-rajkot",
+    icon: <HardDrive size={28} />,
+  },
+  {
     title: "Virus & Spyware Removal",
     description:
       "Thorough malware cleanup, adware removal, browser hijack eradication, and security software installation to protect your personal and business data.",
@@ -111,13 +118,6 @@ const localServices = [
       "Cracked, blank, or flickering laptop screen panel replacement using premium grade LCD and LED panels with rapid turnaround.",
     href: "/products/laptop-screen-replacement-rajkot",
     icon: <Monitor size={28} />,
-  },
-  {
-    title: "SSD Upgrade & Installation",
-    description:
-      "Transform slow laptops and desktop PCs with lightning-fast NVMe M.2 and SATA SSD upgrades, seamless data cloning, and warranty in Rajkot.",
-    href: "/services/ssd-upgrade-rajkot",
-    icon: <HardDrive size={28} />,
   },
 ];
 

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase/admin';
-import type { Quote } from '@/lib/db/types';
+import { getQuoteByToken } from '@/lib/db/quotes';
+import { getCompanySettings } from '@/lib/db/settings';
 import { generateQuotePdf } from '@/lib/pdf/quote-pdf';
+import type { Quote } from '@/lib/db/types';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -13,30 +16,25 @@ export async function GET(
       return new NextResponse('Token missing', { status: 400 });
     }
 
-    let quote: Quote | null = null;
-
-    try {
-      const db = getAdminDb();
-      if (db) {
-        const snapshot = await db
-          .collection('quotes')
-          .where('publicToken', '==', token)
-          .limit(1)
-          .get();
-
-        if (!snapshot.empty) {
-          quote = snapshot.docs[0].data() as Quote;
-        }
-      }
-    } catch (e) {
-      console.warn('Error reading quote for PDF:', e);
-    }
+    const quote = await getQuoteByToken(token);
 
     if (!quote) {
       return new NextResponse('Quotation not found', { status: 404 });
     }
 
-    const pdfBytes = await generateQuotePdf(quote);
+    // Merge live company settings so admin edits to Terms & Conditions or Header immediately reflect
+    const companySettings = await getCompanySettings();
+    const effectiveQuote: Quote = {
+      ...quote,
+      companySnapshot: {
+        ...companySettings,
+        ...(quote.companySnapshot || {}),
+        termsAndConditions: companySettings.termsAndConditions || quote.companySnapshot?.termsAndConditions,
+        footerNote: companySettings.footerNote || quote.companySnapshot?.footerNote,
+      },
+    };
+
+    const pdfBytes = await generateQuotePdf(effectiveQuote);
 
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,

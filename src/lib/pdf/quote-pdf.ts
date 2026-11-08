@@ -1,316 +1,663 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
 import type { Quote } from '../db/types';
-import { formatPaise } from '../pricing/calculator';
 
 /**
- * Generate a professional quotation PDF matching Indian business standards.
- * Returns Uint8Array of PDF bytes.
+ * Format date as DD-MM-YYYY (e.g. 18-09-2026)
+ */
+function formatDateDDMMYYYY(seconds?: number): string {
+  const d = seconds ? new Date(seconds * 1000) : new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+/**
+ * Safely embed product or logo image (PNG / JPG) into PDF.
+ * Handles both remote URLs and local /public files.
+ */
+async function loadImage(pdfDoc: PDFDocument, url?: string) {
+  if (!url) return null;
+  try {
+    let bytes: Buffer | null = null;
+    let isPng = false;
+    let isJpg = false;
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        const arrayBuf = await res.arrayBuffer();
+        bytes = Buffer.from(arrayBuf);
+        const contentType = res.headers.get('content-type') || '';
+        isPng = contentType.includes('png') || url.toLowerCase().includes('.png');
+        isJpg = contentType.includes('jpeg') || contentType.includes('jpg') || url.toLowerCase().includes('.jpg') || url.toLowerCase().includes('.jpeg');
+      }
+    } else if (url.startsWith('/')) {
+      const localPath = path.join(process.cwd(), 'public', url.replace(/^\//, ''));
+      if (fs.existsSync(localPath)) {
+        bytes = fs.readFileSync(localPath);
+        isPng = url.toLowerCase().endsWith('.png');
+        isJpg = url.toLowerCase().endsWith('.jpg') || url.toLowerCase().endsWith('.jpeg');
+      }
+    }
+
+    if (bytes) {
+      if (isPng) return await pdfDoc.embedPng(bytes);
+      if (isJpg) return await pdfDoc.embedJpg(bytes);
+      try {
+        return await pdfDoc.embedPng(bytes);
+      } catch {
+        return await pdfDoc.embedJpg(bytes);
+      }
+    }
+  } catch {}
+  return null;
+}
+
+/**
+ * Generate official Konark Computers Quotation matching the exact signature layout:
+ * - Header: Company Logo, Legal Name, Address, Contact, GSTIN, Customer details, Date
+ * - Yellow Header Bar (Product | Total Rate)
+ * - Grid rows with product image thumbnail and clean titles
+ * - Empty continuation grid rows filling the sheet
+ * - Vibrant Orange Summary Bar (Call Now | With GST | Total)
+ * - Royal Blue Bar (Phone | Website | Founder Name)
+ * - Footer: Terms & Conditions and Footer Note (editable from Admin settings), Bank details, Signatory
  */
 export async function generateQuotePdf(quote: Quote): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
-  let page = pdfDoc.addPage([595.28, 841.89]); // A4 size in points (width x height)
+  const page = pdfDoc.addPage([595.28, 841.89]); // Standard A4 in points
   const { width, height } = page.getSize();
 
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  // Brand Colors
-  const colorDark = rgb(0.1, 0.1, 0.18); // #1a1a2e
-  const colorGold = rgb(0.83, 0.65, 0.45); // #d4a574
-  const colorTeal = rgb(0.06, 0.59, 0.61); // #0f969c
-  const colorText = rgb(0.1, 0.1, 0.1);
-  const colorMuted = rgb(0.4, 0.4, 0.45);
-  const colorLightBg = rgb(0.96, 0.94, 0.91);
-  const colorLine = rgb(0.88, 0.88, 0.88);
+  // Exact Brand Colors
+  const black = rgb(0, 0, 0);
+  const white = rgb(1, 1, 1);
+  const brightYellow = rgb(1, 0.92, 0); // #ffea00 / bright yellow
+  const vibrantOrange = rgb(1, 0.58, 0); // #ff9400 / bright orange
+  const royalBlue = rgb(0, 0.33, 0.85); // #0055d8 / signature royal blue
+  const textDark = rgb(0.12, 0.12, 0.12);
+  const textGray = rgb(0.35, 0.35, 0.35);
+  const lineGray = rgb(0.8, 0.8, 0.8);
+  const greenCall = rgb(0.1, 0.6, 0.2);
 
-  let y = height - 40;
+  const leftMargin = 28;
+  const tableWidth = width - leftMargin * 2; // 539.28 pt
+  const col1Width = 90; // Image column
+  const col3Width = 125; // Total Rate column
+  const col2Width = tableWidth - col1Width - col3Width; // 324.28 pt Product column
 
-  // Header Banner
-  page.drawRectangle({
-    x: 0,
-    y: height - 100,
-    width,
-    height: 100,
-    color: colorDark,
-  });
+  const dateStr = formatDateDDMMYYYY(quote.createdAt?.seconds);
+  const customerName = (quote.customer?.name || 'Customer').trim();
+  const company = quote.companySnapshot || {
+    legalName: 'Konark Computers',
+    gstin: '24AAAAA0000A1Z5',
+    address: '234-Vitt Bhavan, Near Gondal Road Flyover, Rajkot, Gujarat 360002, India',
+    phone: '+91 942 642 9416',
+    email: 'omesh_tank@yahoo.com',
+    termsAndConditions: '1. Quotation valid for 7 days from issue date.\n2. Prices subject to stock availability.\n3. Hardware warranty as per OEM manufacturer terms.\n4. Disputes subject to Rajkot jurisdiction.',
+    footerNote: 'Konark Computers — Serving Rajkot Since 1999.',
+  };
 
-  // Company Name & Subtitle
-  page.drawText(quote.companySnapshot.legalName || 'KONARK COMPUTERS', {
-    x: 40,
-    y: height - 45,
-    size: 20,
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 1. TOP HEADER: COMPANY DETAILS & LOGO
+  // ═══════════════════════════════════════════════════════════════════════════
+  const headerTop = height - 20;
+
+  // A. Company Logo (Left side)
+  try {
+    const logoEmbed = await loadImage(pdfDoc, '/logo2.png');
+    if (logoEmbed) {
+      const targetHeight = 44;
+      const scale = targetHeight / logoEmbed.height;
+      const targetWidth = logoEmbed.width * scale;
+      page.drawImage(logoEmbed, {
+        x: leftMargin,
+        y: headerTop - targetHeight,
+        width: targetWidth,
+        height: targetHeight,
+      });
+    } else {
+      // Fallback text logo
+      page.drawText(company.legalName || 'Konark Computers', {
+        x: leftMargin,
+        y: headerTop - 18,
+        size: 16,
+        font: fontBold,
+        color: royalBlue,
+      });
+    }
+  } catch {}
+
+  // B. Company Information (Right side)
+  const rightEdge = leftMargin + tableWidth;
+
+  const legalNameStr = company.legalName || 'Konark Computers';
+  const legalNameW = fontBold.widthOfTextAtSize(legalNameStr, 13);
+  page.drawText(legalNameStr, {
+    x: rightEdge - legalNameW,
+    y: headerTop - 12,
+    size: 13,
     font: fontBold,
-    color: rgb(1, 1, 1),
+    color: black,
   });
 
-  page.drawText('PRECISION IT HARDWARE & REPAIR SERVICES • ESTD. 1999', {
-    x: 40,
-    y: height - 62,
-    size: 8,
+  const subtitleStr = 'Computer & Laptop Solutions, IT Hardware & Networking';
+  const subtitleW = fontRegular.widthOfTextAtSize(subtitleStr, 7.5);
+  page.drawText(subtitleStr, {
+    x: rightEdge - subtitleW,
+    y: headerTop - 23,
+    size: 7.5,
     font: fontRegular,
-    color: colorGold,
+    color: textGray,
   });
 
-  page.drawText('QUOTATION / ESTIMATE', {
-    x: width - 210,
-    y: height - 45,
-    size: 14,
-    font: fontBold,
-    color: colorGold,
-  });
-
-  page.drawText(`Quote No: ${quote.quoteNumber}`, {
-    x: width - 210,
-    y: height - 60,
-    size: 9,
+  const addressStr = company.address || 'Rajkot, Gujarat, India';
+  const addressW = fontRegular.widthOfTextAtSize(addressStr, 7.5);
+  page.drawText(addressStr, {
+    x: rightEdge - addressW,
+    y: headerTop - 33,
+    size: 7.5,
     font: fontRegular,
-    color: rgb(1, 1, 1),
+    color: textGray,
   });
 
-  const quoteDate = new Date(quote.createdAt.seconds * 1000).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-  const validUntilDate = new Date(quote.validUntil.seconds * 1000).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-
-  page.drawText(`Date: ${quoteDate}`, {
-    x: width - 210,
-    y: height - 73,
-    size: 8,
+  const contactStr = `Phone: ${company.phone || '+91 942 642 9416'}   Email: ${company.email || 'omesh_tank@yahoo.com'}`;
+  const contactW = fontRegular.widthOfTextAtSize(contactStr, 7.5);
+  page.drawText(contactStr, {
+    x: rightEdge - contactW,
+    y: headerTop - 43,
+    size: 7.5,
     font: fontRegular,
-    color: rgb(0.9, 0.9, 0.9),
+    color: textGray,
   });
 
-  page.drawText(`Valid Until: ${validUntilDate}`, {
-    x: width - 210,
-    y: height - 85,
-    size: 8,
-    font: fontRegular,
-    color: rgb(0.9, 0.9, 0.9),
-  });
-
-  y = height - 125;
-
-  // Two columns: Shop details & Customer details
-  // Left: Shop Info
-  page.drawText('ISSUED BY:', { x: 40, y, size: 9, font: fontBold, color: colorTeal });
-  y -= 14;
-  page.drawText(quote.companySnapshot.legalName, { x: 40, y, size: 9, font: fontBold, color: colorText });
-  y -= 12;
-  page.drawText(quote.companySnapshot.address, { x: 40, y, size: 8, font: fontRegular, color: colorMuted });
-  y -= 12;
-  page.drawText(`Phone: ${quote.companySnapshot.phone}  |  Email: ${quote.companySnapshot.email}`, {
-    x: 40,
-    y,
-    size: 8,
-    font: fontRegular,
-    color: colorMuted,
-  });
-  if (quote.companySnapshot.gstin) {
-    y -= 12;
-    page.drawText(`GSTIN: ${quote.companySnapshot.gstin} (State Code: 24 - Gujarat)`, {
-      x: 40,
-      y,
+  if (company.gstin) {
+    const gstinStr = `GSTIN: ${company.gstin}`;
+    const gstinW = fontBold.widthOfTextAtSize(gstinStr, 8);
+    page.drawText(gstinStr, {
+      x: rightEdge - gstinW,
+      y: headerTop - 54,
       size: 8,
       font: fontBold,
-      color: colorText,
+      color: textDark,
     });
   }
 
-  // Right: Customer Info
-  let custY = height - 125;
-  const custX = 330;
-  page.drawText('QUOTATION FOR:', { x: custX, y: custY, size: 9, font: fontBold, color: colorTeal });
-  custY -= 14;
-  page.drawText(quote.customer.name, { x: custX, y: custY, size: 9, font: fontBold, color: colorText });
-  custY -= 12;
-  if (quote.customer.company) {
-    page.drawText(quote.customer.company, { x: custX, y: custY, size: 8, font: fontBold, color: colorMuted });
-    custY -= 12;
-  }
-  page.drawText(`Phone: ${quote.customer.phone}`, { x: custX, y: custY, size: 8, font: fontRegular, color: colorMuted });
-  custY -= 12;
-  if (quote.customer.email) {
-    page.drawText(`Email: ${quote.customer.email}`, { x: custX, y: custY, size: 8, font: fontRegular, color: colorMuted });
-    custY -= 12;
-  }
-  page.drawText(`Place of Supply: ${quote.customer.stateName} (Code: ${quote.customer.stateCode})`, {
-    x: custX,
-    y: custY,
-    size: 8,
-    font: fontRegular,
-    color: colorMuted,
-  });
-  if (quote.customer.gstin) {
-    custY -= 12;
-    page.drawText(`Customer GSTIN: ${quote.customer.gstin}`, {
-      x: custX,
-      y: custY,
-      size: 8,
-      font: fontBold,
-      color: colorText,
-    });
-  }
-
-  y = Math.min(y, custY) - 25;
-
-  // Table Header
-  page.drawRectangle({
-    x: 40,
-    y: y - 5,
-    width: width - 80,
-    height: 22,
-    color: colorLightBg,
-  });
-
-  page.drawText('#', { x: 45, y, size: 8, font: fontBold, color: colorDark });
-  page.drawText('ITEM DESCRIPTION', { x: 65, y, size: 8, font: fontBold, color: colorDark });
-  page.drawText('HSN/SAC', { x: 260, y, size: 8, font: fontBold, color: colorDark });
-  page.drawText('QTY', { x: 320, y, size: 8, font: fontBold, color: colorDark });
-  page.drawText('RATE (₹)', { x: 360, y, size: 8, font: fontBold, color: colorDark });
-  page.drawText('GST %', { x: 430, y, size: 8, font: fontBold, color: colorDark });
-  page.drawText('TOTAL (₹)', { x: 490, y, size: 8, font: fontBold, color: colorDark });
-
-  y -= 22;
-
-  // Table Items
-  const allItems = [...quote.items, ...(quote.serviceItems || [])];
-
-  for (let i = 0; i < allItems.length; i++) {
-    const item = allItems[i];
-
-    // Page overflow check
-    if (y < 120) {
-      page = pdfDoc.addPage([595.28, 841.89]);
-      y = height - 50;
-    }
-
-    page.drawLine({
-      start: { x: 40, y: y + 14 },
-      end: { x: width - 40, y: y + 14 },
-      thickness: 0.5,
-      color: colorLine,
-    });
-
-    page.drawText(String(i + 1), { x: 45, y, size: 8, font: fontRegular, color: colorText });
-
-    // Item name truncate if needed
-    const nameStr = item.name.length > 40 ? item.name.substring(0, 38) + '...' : item.name;
-    page.drawText(nameStr, { x: 65, y, size: 8, font: fontBold, color: colorText });
-
-    if (item.specsSummary) {
-      const specStr = item.specsSummary.length > 50 ? item.specsSummary.substring(0, 48) + '...' : item.specsSummary;
-      page.drawText(specStr, { x: 65, y: y - 10, size: 7, font: fontRegular, color: colorMuted });
-    }
-
-    page.drawText(item.hsnCode || '-', { x: 260, y, size: 8, font: fontRegular, color: colorMuted });
-    page.drawText(String(item.qty), { x: 325, y, size: 8, font: fontRegular, color: colorText });
-    page.drawText((item.unitPricePaise / 100).toFixed(2), { x: 360, y, size: 8, font: fontRegular, color: colorText });
-    page.drawText(`${item.gstRateBps / 100}%`, { x: 435, y, size: 8, font: fontRegular, color: colorMuted });
-    page.drawText((item.lineTotalPaise / 100).toFixed(2), { x: 490, y, size: 8, font: fontBold, color: colorText });
-
-    y -= item.specsSummary ? 24 : 18;
-  }
-
-  // Bottom Line of table
+  // Divider rule below header
+  const headerDividerY = headerTop - 62;
   page.drawLine({
-    start: { x: 40, y: y + 10 },
-    end: { x: width - 40, y: y + 10 },
+    start: { x: leftMargin, y: headerDividerY },
+    end: { x: rightEdge, y: headerDividerY },
+    color: lineGray,
     thickness: 1,
-    color: colorDark,
   });
 
-  y -= 10;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 2. CUSTOMER & QUOTATION STRIP
+  // ═══════════════════════════════════════════════════════════════════════════
+  const custRowY = headerDividerY - 18;
 
-  // Totals Box (Right aligned)
-  const totalsX = 350;
-  const valX = 490;
-
-  page.drawText('Subtotal (Taxable):', { x: totalsX, y, size: 8, font: fontRegular, color: colorMuted });
-  page.drawText((quote.totals.taxablePaise / 100).toFixed(2), { x: valX, y, size: 8, font: fontRegular, color: colorText });
-  y -= 14;
-
-  if (quote.totals.cgstPaise > 0) {
-    page.drawText('CGST:', { x: totalsX, y, size: 8, font: fontRegular, color: colorMuted });
-    page.drawText((quote.totals.cgstPaise / 100).toFixed(2), { x: valX, y, size: 8, font: fontRegular, color: colorText });
-    y -= 14;
-
-    page.drawText('SGST:', { x: totalsX, y, size: 8, font: fontRegular, color: colorMuted });
-    page.drawText((quote.totals.sgstPaise / 100).toFixed(2), { x: valX, y, size: 8, font: fontRegular, color: colorText });
-    y -= 14;
-  }
-
-  if (quote.totals.igstPaise > 0) {
-    page.drawText('IGST:', { x: totalsX, y, size: 8, font: fontRegular, color: colorMuted });
-    page.drawText((quote.totals.igstPaise / 100).toFixed(2), { x: valX, y, size: 8, font: fontRegular, color: colorText });
-    y -= 14;
-  }
-
-  if (quote.totals.roundOffPaise !== 0) {
-    page.drawText('Round Off:', { x: totalsX, y, size: 8, font: fontRegular, color: colorMuted });
-    const sign = quote.totals.roundOffPaise > 0 ? '+' : '';
-    page.drawText(`${sign}${(quote.totals.roundOffPaise / 100).toFixed(2)}`, {
-      x: valX,
-      y,
-      size: 8,
-      font: fontRegular,
-      color: colorMuted,
-    });
-    y -= 14;
-  }
-
-  // Grand Total Bar
-  page.drawRectangle({
-    x: totalsX - 10,
-    y: y - 5,
-    width: width - totalsX - 30,
-    height: 22,
-    color: colorDark,
-  });
-
-  page.drawText('GRAND TOTAL:', { x: totalsX, y: y + 2, size: 9, font: fontBold, color: colorGold });
-  page.drawText(formatPaise(quote.totals.grandTotalPaise), {
-    x: valX - 5,
-    y: y + 2,
-    size: 10,
+  // Customer Name (Left)
+  const custLabel = `Customer: ${customerName}`;
+  page.drawText(custLabel, {
+    x: leftMargin,
+    y: custRowY,
+    size: 11,
     font: fontBold,
-    color: rgb(1, 1, 1),
+    color: black,
   });
 
-  y -= 35;
-
-  // Terms and Bank details
-  page.drawText('Terms & Conditions:', { x: 40, y, size: 8, font: fontBold, color: colorTeal });
-  y -= 12;
-
-  const termsLines = (quote.companySnapshot.termsAndConditions || '').split('\n');
-  for (const tLine of termsLines) {
-    page.drawText(tLine, { x: 40, y, size: 7, font: fontRegular, color: colorMuted });
-    y -= 10;
+  // Customer Phone (if present)
+  if (quote.customer?.phone) {
+    page.drawText(`(M: ${quote.customer.phone})`, {
+      x: leftMargin + fontBold.widthOfTextAtSize(custLabel, 11) + 8,
+      y: custRowY,
+      size: 9.5,
+      font: fontRegular,
+      color: textGray,
+    });
   }
 
-  // Footer Note
-  page.drawText(quote.companySnapshot.footerNote || 'Konark Computers — Quality IT Support Since 1999', {
-    x: 40,
-    y: 30,
+  // Quote Number & Date (Right)
+  const metaRightStr = `${quote.quoteNumber ? quote.quoteNumber + '   ' : ''}Date: ${dateStr}`;
+  const metaRightW = fontBold.widthOfTextAtSize(metaRightStr, 10.5);
+  page.drawText(metaRightStr, {
+    x: rightEdge - metaRightW,
+    y: custRowY,
+    size: 10.5,
+    font: fontBold,
+    color: black,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 3. TABLE DIMENSIONS & COORDINATES
+  // ═══════════════════════════════════════════════════════════════════════════
+  const tableTop = custRowY - 12;
+  const headerHeight = 22;
+  const orangeBarHeight = 26;
+  const blueBarHeight = 22;
+  const bottomBarsHeight = orangeBarHeight + blueBarHeight;
+
+  // Footer space at bottom (Terms & Conditions, Footer note, Signatory)
+  const footerReservedHeight = 100;
+  const tableBottom = 16 + footerReservedHeight + bottomBarsHeight;
+  const totalItemAreaHeight = tableTop - headerHeight - tableBottom;
+
+  // 8 uniform rows to reproduce the signature sheet
+  const totalRowsCount = Math.max(8, Math.min(10, quote.items.length));
+  const rowHeight = totalItemAreaHeight / totalRowsCount;
+
+  // Yellow Table Header Bar
+  const headerY = tableTop - headerHeight;
+  page.drawRectangle({
+    x: leftMargin,
+    y: headerY,
+    width: tableWidth,
+    height: headerHeight,
+    color: brightYellow,
+    borderColor: black,
+    borderWidth: 1.5,
+  });
+
+  // Vertical separator lines in header
+  page.drawLine({
+    start: { x: leftMargin + col1Width, y: headerY },
+    end: { x: leftMargin + col1Width, y: headerY + headerHeight },
+    color: black,
+    thickness: 1.5,
+  });
+  page.drawLine({
+    start: { x: leftMargin + col1Width + col2Width, y: headerY },
+    end: { x: leftMargin + col1Width + col2Width, y: headerY + headerHeight },
+    color: black,
+    thickness: 1.5,
+  });
+
+  // Header Titles
+  page.drawText('Product', {
+    x: leftMargin + col1Width + 10,
+    y: headerY + 6.5,
+    size: 10.5,
+    font: fontBold,
+    color: black,
+  });
+
+  const totalRateHeader = 'Total Rate';
+  const totalRateHeaderW = fontBold.widthOfTextAtSize(totalRateHeader, 10.5);
+  page.drawText(totalRateHeader, {
+    x: leftMargin + col1Width + col2Width + col3Width - totalRateHeaderW - 14,
+    y: headerY + 6.5,
+    size: 10.5,
+    font: fontBold,
+    color: black,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 4. TABLE ROWS (ITEMS & EMPTY SLOTS)
+  // ═══════════════════════════════════════════════════════════════════════════
+  let currentY = headerY;
+
+  for (let i = 0; i < totalRowsCount; i++) {
+    const item = quote.items[i];
+    const rowY = currentY - rowHeight;
+
+    // Row border
+    page.drawRectangle({
+      x: leftMargin,
+      y: rowY,
+      width: tableWidth,
+      height: rowHeight,
+      borderColor: black,
+      borderWidth: 1,
+    });
+
+    // Vertical column divider 1 (between image and product)
+    page.drawLine({
+      start: { x: leftMargin + col1Width, y: rowY },
+      end: { x: leftMargin + col1Width, y: rowY + rowHeight },
+      color: black,
+      thickness: 1,
+    });
+
+    // Vertical column divider 2 (between product and rate)
+    page.drawLine({
+      start: { x: leftMargin + col1Width + col2Width, y: rowY },
+      end: { x: leftMargin + col1Width + col2Width, y: rowY + rowHeight },
+      color: black,
+      thickness: 1,
+    });
+
+    if (item) {
+      // Draw product image in Col 1
+      try {
+        const imageEmbed = await loadImage(pdfDoc, item.imageUrl);
+        if (imageEmbed) {
+          const maxImgW = col1Width - 14;
+          const maxImgH = rowHeight - 8;
+          const imgScale = Math.min(maxImgW / imageEmbed.width, maxImgH / imageEmbed.height, 1);
+          const scaledW = imageEmbed.width * imgScale;
+          const scaledH = imageEmbed.height * imgScale;
+
+          page.drawImage(imageEmbed, {
+            x: leftMargin + (col1Width - scaledW) / 2,
+            y: rowY + (rowHeight - scaledH) / 2,
+            width: scaledW,
+            height: scaledH,
+          });
+        }
+      } catch {}
+
+      // Draw Product Name in Col 2 (with quantity multiplier if > 1)
+      let title = item.name.toUpperCase();
+      if (item.qty > 1) {
+        title += ` x ${item.qty}`;
+      }
+
+      const fontSize = 9.5;
+      const maxTextWidth = col2Width - 16;
+      const words = title.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+
+      for (const w of words) {
+        const testLine = currentLine ? `${currentLine} ${w}` : w;
+        if (fontBold.widthOfTextAtSize(testLine, fontSize) > maxTextWidth) {
+          if (currentLine) lines.push(currentLine);
+          currentLine = w;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+
+      const totalTextH = lines.length * 12;
+      let textStartY = rowY + (rowHeight + totalTextH) / 2 - 9;
+
+      for (const lineText of lines.slice(0, 3)) {
+        page.drawText(lineText, {
+          x: leftMargin + col1Width + 10,
+          y: textStartY,
+          size: fontSize,
+          font: fontBold,
+          color: textDark,
+        });
+        textStartY -= 12;
+      }
+
+      // Draw Rate in Col 3 (Total Rate & Per Item Cost)
+      const lineTotalPaise = item.lineTotalPaise ?? ((item.unitPricePaise || 0) * (item.qty || 1));
+      const unitPricePaise = item.unitPricePaise ?? (item.qty ? lineTotalPaise / item.qty : lineTotalPaise);
+
+      const lineTotalFormatted = (lineTotalPaise / 100).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      const unitPriceFormatted = (unitPricePaise / 100).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      const rateColRight = leftMargin + col1Width + col2Width + col3Width - 14;
+
+      if (item.qty > 1) {
+        // Line Total
+        const totalText = `Rs. ${lineTotalFormatted}`;
+        const totalW = fontBold.widthOfTextAtSize(totalText, 10.5);
+        page.drawText(totalText, {
+          x: rateColRight - totalW,
+          y: rowY + rowHeight / 2 + 3,
+          size: 10.5,
+          font: fontBold,
+          color: black,
+        });
+
+        // Per-item cost
+        const perItemText = `(@ Rs. ${unitPriceFormatted} each)`;
+        const perItemW = fontRegular.widthOfTextAtSize(perItemText, 7.5);
+        page.drawText(perItemText, {
+          x: rateColRight - perItemW,
+          y: rowY + rowHeight / 2 - 9,
+          size: 7.5,
+          font: fontRegular,
+          color: textGray,
+        });
+      } else {
+        // Single Item Rate
+        const rateText = `Rs. ${lineTotalFormatted}`;
+        const rateW = fontBold.widthOfTextAtSize(rateText, 10.5);
+        page.drawText(rateText, {
+          x: rateColRight - rateW,
+          y: rowY + (rowHeight - 10.5) / 2,
+          size: 10.5,
+          font: fontBold,
+          color: black,
+        });
+      }
+    }
+
+    currentY = rowY;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5. VIBRANT ORANGE SUMMARY ROW
+  // ═══════════════════════════════════════════════════════════════════════════
+  const orangeY = currentY - orangeBarHeight;
+  page.drawRectangle({
+    x: leftMargin,
+    y: orangeY,
+    width: tableWidth,
+    height: orangeBarHeight,
+    color: vibrantOrange,
+    borderColor: black,
+    borderWidth: 1.5,
+  });
+
+  page.drawLine({
+    start: { x: leftMargin + col1Width + col2Width, y: orangeY },
+    end: { x: leftMargin + col1Width + col2Width, y: orangeY + orangeBarHeight },
+    color: black,
+    thickness: 1.5,
+  });
+
+  // Call Now pill on left
+  page.drawText('Call Now', {
+    x: leftMargin + 20,
+    y: orangeY + 8,
+    size: 10.5,
+    font: fontBold,
+    color: greenCall,
+  });
+
+  // Tax note in middle ("With GST")
+  page.drawText('With GST', {
+    x: leftMargin + col1Width + col2Width - 72,
+    y: orangeY + 8,
+    size: 10.5,
+    font: fontBold,
+    color: black,
+  });
+
+  // Grand Total on right
+  const grandTotalStr = (quote.totals.grandTotalPaise / 100).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const totalFormattedText = `Rs. ${grandTotalStr}`;
+  page.drawText(totalFormattedText, {
+    x: leftMargin + col1Width + col2Width + 12,
+    y: orangeY + 7.5,
+    size: 12,
+    font: fontBold,
+    color: black,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 6. SIGNATURE ROYAL BLUE BAR
+  // ═══════════════════════════════════════════════════════════════════════════
+  const blueY = orangeY - blueBarHeight;
+  page.drawRectangle({
+    x: leftMargin,
+    y: blueY,
+    width: tableWidth,
+    height: blueBarHeight,
+    color: royalBlue,
+    borderColor: black,
+    borderWidth: 1.5,
+  });
+
+  // Dividers
+  page.drawLine({
+    start: { x: leftMargin + 130, y: blueY },
+    end: { x: leftMargin + 130, y: blueY + blueBarHeight },
+    color: white,
+    thickness: 0.8,
+  });
+  page.drawLine({
+    start: { x: rightEdge - 130, y: blueY },
+    end: { x: rightEdge - 130, y: blueY + blueBarHeight },
+    color: white,
+    thickness: 0.8,
+  });
+
+  // Phone number (Left)
+  page.drawText(company.phone || '942 642 9416', {
+    x: leftMargin + 16,
+    y: blueY + 6.5,
+    size: 10.5,
+    font: fontBold,
+    color: white,
+  });
+
+  // Website URL (Center)
+  const siteText = 'http://www.konarkcomputers.in/';
+  const siteTextW = fontBold.widthOfTextAtSize(siteText, 10.5);
+  page.drawText(siteText, {
+    x: leftMargin + (tableWidth - siteTextW) / 2,
+    y: blueY + 6.5,
+    size: 10.5,
+    font: fontBold,
+    color: white,
+  });
+
+  // Founder Name (Right)
+  const founderText = 'Omesh Tank';
+  const founderTextW = fontBold.widthOfTextAtSize(founderText, 10.5);
+  page.drawText(founderText, {
+    x: rightEdge - founderTextW - 16,
+    y: blueY + 6.5,
+    size: 10.5,
+    font: fontBold,
+    color: white,
+  });
+
+  // Outer border enclosing the sheet table
+  page.drawRectangle({
+    x: leftMargin,
+    y: blueY,
+    width: tableWidth,
+    height: tableTop - blueY,
+    borderColor: black,
+    borderWidth: 1.5,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 7. FOOTER: TERMS & CONDITIONS, FOOTER NOTE, BANK DETAILS & SIGNATURE
+  // ═══════════════════════════════════════════════════════════════════════════
+  let footerY = blueY - 14;
+
+  // Terms and conditions title
+  page.drawText('Terms & Conditions:', {
+    x: leftMargin,
+    y: footerY,
+    size: 8.5,
+    font: fontBold,
+    color: textDark,
+  });
+
+  footerY -= 11;
+
+  // Parse terms lines from company snapshot (editable from admin settings)
+  const rawTerms = company.termsAndConditions ||
+    '1. Quotation valid for 7 days from issue date.\n2. Prices subject to stock availability.\n3. Hardware warranty as per OEM manufacturer terms.\n4. Disputes subject to Rajkot jurisdiction.';
+
+  const termsLines = rawTerms
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  for (const line of termsLines.slice(0, 5)) {
+    page.drawText(line, {
+      x: leftMargin + 4,
+      y: footerY,
+      size: 7.2,
+      font: fontRegular,
+      color: textGray,
+    });
+    footerY -= 9.5;
+  }
+
+  // Bank & UPI details (if provided)
+  if (company.bankName || company.bankAccountNo || company.upiId) {
+    const bankDetailsParts: string[] = [];
+    if (company.bankName) bankDetailsParts.push(`Bank: ${company.bankName}`);
+    if (company.bankAccountNo) bankDetailsParts.push(`A/C: ${company.bankAccountNo}`);
+    if (company.bankIfsc) bankDetailsParts.push(`IFSC: ${company.bankIfsc}`);
+    if (company.upiId) bankDetailsParts.push(`UPI: ${company.upiId}`);
+
+    const bankStr = bankDetailsParts.join('  |  ');
+    page.drawText(bankStr, {
+      x: leftMargin + 4,
+      y: footerY,
+      size: 7.2,
+      font: fontRegular,
+      color: textGray,
+    });
+    footerY -= 9.5;
+  }
+
+  // Bottom Note & Authorized Signatory
+  const bottomNoteY = Math.max(16, footerY - 4);
+
+  // Editable Footer Note (e.g. "Konark Computers — Serving Rajkot Since 1999.")
+  const footerNoteStr = company.footerNote || 'Konark Computers — Serving Rajkot Since 1999.';
+  page.drawText(footerNoteStr, {
+    x: leftMargin,
+    y: bottomNoteY,
+    size: 7.5,
+    font: fontOblique,
+    color: textGray,
+  });
+
+  // Authorized Signatory text on right
+  const forCompStr = `For, ${company.legalName || 'Konark Computers'}`;
+  const forCompW = fontBold.widthOfTextAtSize(forCompStr, 8);
+  page.drawText(forCompStr, {
+    x: rightEdge - forCompW,
+    y: bottomNoteY + 12,
     size: 8,
     font: fontBold,
-    color: colorTeal,
+    color: textDark,
   });
 
-  page.drawText('This is a computer-generated quotation and does not require a physical signature.', {
-    x: 40,
-    y: 18,
-    size: 7,
+  const authSignStr = 'Authorized Signatory';
+  const authSignW = fontRegular.widthOfTextAtSize(authSignStr, 7.5);
+  page.drawText(authSignStr, {
+    x: rightEdge - authSignW,
+    y: bottomNoteY,
+    size: 7.5,
     font: fontRegular,
-    color: colorMuted,
+    color: textGray,
   });
 
-  return await pdfDoc.save();
+  return pdfDoc.save();
 }
-

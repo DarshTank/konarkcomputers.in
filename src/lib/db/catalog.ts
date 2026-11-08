@@ -8,6 +8,7 @@ import {
   SEED_SERVICES,
   SEED_TAX_SETTINGS,
   SEED_COMPANY_SETTINGS,
+  SEED_QUOTE_SETTINGS,
 } from './seed-data';
 import type {
   Category,
@@ -18,6 +19,7 @@ import type {
   ServiceItem,
   TaxSettings,
   CompanySettings,
+  QuoteSettings,
 } from './types';
 
 export interface CatalogData {
@@ -29,6 +31,7 @@ export interface CatalogData {
   services: ServiceItem[];
   taxSettings: TaxSettings;
   companySettings: CompanySettings;
+  quoteSettings: QuoteSettings;
 }
 
 /**
@@ -53,11 +56,12 @@ export async function getActiveCatalog(): Promise<CatalogData> {
       services: SEED_SERVICES as unknown as ServiceItem[],
       taxSettings: SEED_TAX_SETTINGS,
       companySettings: SEED_COMPANY_SETTINGS,
+      quoteSettings: SEED_QUOTE_SETTINGS,
     };
   }
 
   try {
-    const [catSnap, brandSnap, attrSnap, prodSnap, ruleSnap, srvSnap, taxSnap, compSnap] =
+    const [catSnap, brandSnap, attrSnap, prodSnap, ruleSnap, srvSnap, taxSnap, compSnap, quoteSnap] =
       await Promise.all([
         db.collection('categories').where('isActive', '==', true).orderBy('sortOrder', 'asc').get(),
         db.collection('brands').where('isActive', '==', true).get(),
@@ -67,6 +71,7 @@ export async function getActiveCatalog(): Promise<CatalogData> {
         db.collection('services').where('isActive', '==', true).get(),
         db.collection('settings').doc('tax').get(),
         db.collection('settings').doc('company').get(),
+        db.collection('settings').doc('quote').get(),
       ]);
 
     const categories = !catSnap.empty
@@ -95,6 +100,13 @@ export async function getActiveCatalog(): Promise<CatalogData> {
 
     const taxSettings = taxSnap.exists ? (taxSnap.data() as TaxSettings) : SEED_TAX_SETTINGS;
     const companySettings = compSnap.exists ? (compSnap.data() as CompanySettings) : SEED_COMPANY_SETTINGS;
+    const quoteSettings = quoteSnap.exists
+      ? {
+          enabled: (quoteSnap.data() as any)?.enabled !== false,
+          updatedAt: (quoteSnap.data() as any)?.updatedAt,
+          updatedBy: (quoteSnap.data() as any)?.updatedBy,
+        }
+      : SEED_QUOTE_SETTINGS;
 
     return {
       categories,
@@ -105,6 +117,7 @@ export async function getActiveCatalog(): Promise<CatalogData> {
       services,
       taxSettings,
       companySettings,
+      quoteSettings,
     };
   } catch (error) {
     console.warn('Error fetching catalog from Firestore, falling back to seed data:', error);
@@ -117,6 +130,7 @@ export async function getActiveCatalog(): Promise<CatalogData> {
       services: SEED_SERVICES as unknown as ServiceItem[],
       taxSettings: SEED_TAX_SETTINGS,
       companySettings: SEED_COMPANY_SETTINGS,
+      quoteSettings: SEED_QUOTE_SETTINGS,
     };
   }
 }

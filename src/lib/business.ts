@@ -13,6 +13,8 @@ export const BUSINESS = {
   email: "omesh_tank@yahoo.com",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://www.konarkcomputers.in",
   facebookUrl: "https://www.facebook.com/Konark.Computers/",
+  instagramUrl: "https://www.instagram.com/omesh_konark?obrf=c2E0Z3V0ZDQ2d2hj",
+  youtubeUrl: "https://www.youtube.com/@konarkcomputers",
   hoursDisplay: "Mon – Sat: 9:00 AM – 9:00 PM",
   hoursDays: "Monday through Saturday",
   hoursOpeningTime: "09:00",

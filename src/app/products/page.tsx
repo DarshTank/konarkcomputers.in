@@ -5,6 +5,7 @@ import { PageHero } from "@/components/PageHero/PageHero";
 import { AnimatedSection } from "@/components/AnimatedSection/AnimatedSection";
 import { ArrowRight, Phone, Plus } from "lucide-react";
 import { BUSINESS } from "@/lib/business";
+import { isQuoteEnabled } from "@/lib/db/settings";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -99,7 +100,8 @@ const products = [
   },
 ];
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const quoteEnabled = await isQuoteEnabled();
   return (
     <>
       <PageHero
@@ -161,20 +163,39 @@ export default function ProductsPage() {
                         <ArrowRight size={12} />
                       </Link>
                     )}
-                    <Link
-                      href="/quote"
-                      className="btn btn--primary"
-                      style={{
-                        padding: "8px 16px",
-                        minHeight: "36px",
-                        fontSize: "var(--text-xs)",
-                        width: "100%",
-                        gap: "6px",
-                      }}
-                    >
-                      <Plus size={14} />
-                      Add to quote
-                    </Link>
+                    {quoteEnabled ? (
+                      <Link
+                        href="/quote"
+                        className="btn btn--primary"
+                        style={{
+                          padding: "8px 16px",
+                          minHeight: "36px",
+                          fontSize: "var(--text-xs)",
+                          width: "100%",
+                          gap: "6px",
+                        }}
+                      >
+                        <Plus size={14} />
+                        Add to quote
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/contact"
+                        className="btn btn--outline"
+                        style={{
+                          padding: "8px 16px",
+                          minHeight: "36px",
+                          fontSize: "var(--text-xs)",
+                          width: "100%",
+                          gap: "6px",
+                          color: "var(--color-dark)",
+                          borderColor: "var(--color-border)",
+                        }}
+                      >
+                        Inquire Availability
+                        <ArrowRight size={12} />
+                      </Link>
+                    )}
                     <a href={`tel:${BUSINESS.phone}`} className={styles.productCta}>
                       <Phone size={14} />
                       Call: {BUSINESS.phoneDisplay}
@@ -193,16 +214,29 @@ export default function ProductsPage() {
           <AnimatedSection>
             <div className={styles.ctaContent}>
               <h2 className={styles.ctaTitle}>
-                Need an immediate formal estimate? Build your quote online.
+                {quoteEnabled
+                  ? "Need an immediate formal estimate? Build your quote online."
+                  : "Need hardware pricing or laptop replacement parts in Rajkot?"}
               </h2>
-              <Link
-                href="/quote"
-                className="btn btn--primary"
-                style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
-              >
-                Instant Quotation Builder
-                <ArrowRight size={16} />
-              </Link>
+              {quoteEnabled ? (
+                <Link
+                  href="/quote"
+                  className="btn btn--primary"
+                  style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
+                >
+                  Instant Quotation Builder
+                  <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <Link
+                  href="/contact"
+                  className="btn btn--primary"
+                  style={{ background: "var(--color-dark)", color: "var(--color-surface)" }}
+                >
+                  Contact Workshop
+                  <ArrowRight size={16} />
+                </Link>
+              )}
             </div>
           </AnimatedSection>
         </div>

@@ -25,6 +25,8 @@ import {
 } from '@/lib/compat/engine';
 import { generateQuotePdf } from '@/lib/pdf/quote-pdf';
 import { sendQuoteEmail } from '@/lib/mailer';
+import { isQuoteEnabled, getCompanySettings, getTaxSettings } from '@/lib/db/settings';
+import { saveQuote } from '@/lib/db/quotes';
 
 // Simple in-memory rate limiter per IP: max 10 quote requests per 10 minutes
 const ipRateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -50,6 +52,14 @@ function checkRateLimit(ip: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const isEnabled = await isQuoteEnabled();
+    if (!isEnabled) {
+      return NextResponse.json(
+        { error: 'Quotation system is currently disabled by administrator.' },
+        { status: 403 }
+      );
+    }
+
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
 
     if (!checkRateLimit(ip)) {
@@ -85,21 +95,11 @@ export async function POST(request: NextRequest) {
       db = null;
     }
 
-    // Load Tax & Company Settings
-    let taxSettings: TaxSettings = SEED_TAX_SETTINGS;
-    let companySettings: CompanySettings = SEED_COMPANY_SETTINGS;
-
-    if (db) {
-      try {
-        const taxSnap = await db.collection('settings').doc('tax').get();
-        if (taxSnap.exists) taxSettings = taxSnap.data() as TaxSettings;
-
-        const compSnap = await db.collection('settings').doc('company').get();
-        if (compSnap.exists) companySettings = compSnap.data() as CompanySettings;
-      } catch (e) {
-        console.warn('Could not read settings from Firestore, using defaults:', e);
-      }
-    }
+    // Load Tax & Company Settings (with local + Firestore persistence)
+    const [taxSettings, companySettings] = await Promise.all([
+      getTaxSettings(),
+      getCompanySettings(),
+    ]);
 
     // Fetch products by IDs
     const productSnapshots: Product[] = [];
@@ -201,10 +201,14 @@ export async function POST(request: NextRequest) {
         .map(([k, v]) => `${k}: ${v}`)
         .join(' | ');
 
+      const primaryImage = prod.images?.find((img) => img.isPrimary) || prod.images?.[0];
+      const imageUrl = primaryImage?.url || '';
+
       return {
         productId: prod.id,
         sku: prod.sku,
         name: prod.name,
+        imageUrl,
         categoryName: cat?.name || prod.categoryId,
         brandName: prod.brandId,
         specsSummary,
@@ -300,14 +304,8 @@ export async function POST(request: NextRequest) {
       ],
     };
 
-    // Save to Firestore
-    if (db) {
-      try {
-        await db.collection('quotes').doc(quoteDoc.id).set(quoteDoc);
-      } catch (e) {
-        console.error('Failed to save quote document in Firestore:', e);
-      }
-    }
+    // Save quote across Firestore, local disk, and in-memory cache
+    await saveQuote(quoteDoc);
 
     // Generate PDF & Send Email asynchronously (does not block response)
     (async () => {

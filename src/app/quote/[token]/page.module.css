@@ -274,3 +274,423 @@
     padding: var(--space-3);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   KONARK SIGNATURE QUOTATION SHEET (Matches client's official layout)
+   ═══════════════════════════════════════════════════════════════════ */
+.topActionBar {
+  max-width: 800px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--color-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-teal);
+}
+
+.actionButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.whatsappBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #25D366;
+  text-decoration: none;
+  min-height: 38px;
+  transition: opacity 0.2s ease;
+}
+
+.whatsappBtn:hover {
+  opacity: 0.9;
+}
+
+.sheetCard {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Company Header */
+.sheetCompanyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sheetLogoWrap {
+  flex-shrink: 0;
+}
+
+.companyLogoImg {
+  height: 52px;
+  width: auto;
+  max-width: 170px;
+  object-fit: contain;
+  display: block;
+}
+
+.sheetCompanyInfo {
+  text-align: right;
+  flex: 1;
+}
+
+.companyLegalName {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px;
+}
+
+.companySubtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.companyMetaText {
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.companyGstin {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 3px;
+}
+
+/* Customer & Date Bar */
+.sheetHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #f8fafc;
+  border-bottom: 2px solid #000000;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.custNameText {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.custPhoneText {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.quoteMetaRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.quoteNumberText {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #0055ff;
+}
+
+.quoteDateText {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.placeholderImg {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto;
+  background: #f1f5f9;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.sheetTable {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+}
+
+.yellowTh {
+  background: #ffff00;
+  color: #000000;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 8px 14px;
+  border: 1.5px solid #000000;
+  text-align: left;
+}
+
+.itemTr {
+  height: 68px;
+}
+
+.imgTd {
+  width: 110px;
+  border: 1px solid #000000;
+  text-align: center;
+  padding: 6px;
+  vertical-align: middle;
+}
+
+.productImgThumb {
+  max-width: 85px;
+  max-height: 56px;
+  object-fit: contain;
+  margin: 0 auto;
+  display: block;
+}
+
+.productTd {
+  border: 1px solid #000000;
+  padding: 10px 16px;
+  vertical-align: middle;
+}
+
+.productTitle {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #333333;
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+.rateTd {
+  width: 150px;
+  border: 1px solid #000000;
+  padding: 10px 16px;
+  text-align: right;
+  vertical-align: middle;
+}
+
+.rateCellWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+}
+
+.itemLineTotal {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.itemPerUnit {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.emptyTr {
+  height: 58px;
+}
+
+.emptyTd {
+  border: 1px solid #000000;
+}
+
+.orangeSummaryBar {
+  background: #ff9900;
+  border: 2px solid #000000;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.callNowPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #008744;
+}
+
+.taxNoteText {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.grandTotalText {
+  font-family: var(--font-body);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.blueFooterBar {
+  background: #0055ff;
+  border: 2px solid #000000;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.blueFooterPhone {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.blueFooterUrl {
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.blueFooterFounder {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Footer Section: Terms & Conditions and Signatory */
+.sheetFooterSection {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  background: #ffffff;
+  flex-wrap: wrap;
+}
+
+.termsBox {
+  flex: 1;
+  min-width: 280px;
+}
+
+.termsTitle {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.termsList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.termsList li {
+  margin-bottom: 2px;
+}
+
+.bankDetailsStrip {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 0.75rem;
+  color: #475569;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.signatoryBox {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 180px;
+}
+
+.forCompanyText {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.signatoryPlaceholder {
+  height: 40px;
+}
+
+.authSignText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  border-top: 1px solid #cbd5e1;
+  padding-top: 4px;
+  display: inline-block;
+}
+
+.footerNoteBar {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 8px 20px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #64748b;
+  font-weight: 500;
+}

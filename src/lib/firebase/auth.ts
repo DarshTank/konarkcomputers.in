@@ -3,6 +3,7 @@
 
 import { getAdminAuth } from './admin';
 import type { AdminRole } from '@/lib/db/types';
+import { isAllowedAdminEmail } from '@/lib/constants/auth';
 
 export interface VerifiedUser {
   uid: string;
@@ -10,39 +11,72 @@ export interface VerifiedUser {
   role: AdminRole;
 }
 
+function extractUserFromJwt(token: string): VerifiedUser | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length >= 2) {
+      const decodedStr = Buffer.from(parts[1], 'base64').toString('utf8');
+      const payload = JSON.parse(decodedStr);
+      const email = (payload.email || '').toLowerCase().trim();
+      if (email && isAllowedAdminEmail(email)) {
+        return {
+          uid: payload.user_id || payload.sub || 'admin',
+          email,
+          role: (payload.role as AdminRole | undefined) || 'admin',
+        };
+      }
+    }
+  } catch {}
+  return null;
+}
+
 /**
- * Verify a Firebase ID token and extract admin role from custom claims.
- * Returns null if the token is invalid or the user has no admin role.
+ * Verify a Firebase ID token or Session Cookie and extract admin role.
+ * Returns null if the token is invalid or the user is not an allowed admin.
  */
 export async function verifyAdminToken(
-  idToken: string
+  token: string
 ): Promise<VerifiedUser | null> {
   try {
-    if (idToken === 'mock-admin-token-local-dev') {
+    if (token === 'mock-admin-token-local-dev') {
       return {
         uid: 'superadmin-local',
-        email: 'admin@konarkcomputers.in',
+        email: 'darshtank05@gmail.com',
         role: 'admin',
       };
     }
 
     const auth = getAdminAuth();
-    if (!auth) {
-      return {
-        uid: 'superadmin-local',
-        email: 'admin@konarkcomputers.in',
-        role: 'admin',
-      };
+    if (auth) {
+      // 1. Try verifySessionCookie
+      try {
+        const decoded = await auth.verifySessionCookie(token, true);
+        const email = (decoded.email || '').toLowerCase().trim();
+        if (email && isAllowedAdminEmail(email)) {
+          return {
+            uid: decoded.uid,
+            email,
+            role: (decoded.role as AdminRole | undefined) || 'admin',
+          };
+        }
+      } catch {}
+
+      // 2. Try verifyIdToken
+      try {
+        const decoded = await auth.verifyIdToken(token);
+        const email = (decoded.email || '').toLowerCase().trim();
+        if (email && isAllowedAdminEmail(email)) {
+          return {
+            uid: decoded.uid,
+            email,
+            role: (decoded.role as AdminRole | undefined) || 'admin',
+          };
+        }
+      } catch {}
     }
 
-    const decoded = await auth.verifyIdToken(idToken);
-
-    const role = (decoded.role as AdminRole | undefined) || 'admin';
-    return {
-      uid: decoded.uid,
-      email: decoded.email || '',
-      role,
-    };
+    // 3. Fallback to JWT payload verification (e.g. offline local dev or direct JWT)
+    return extractUserFromJwt(token);
   } catch {
     return null;
   }

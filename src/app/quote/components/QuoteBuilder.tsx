@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuote } from '@/contexts/QuoteContext';
 import type { Product } from '@/lib/db/types';
 import { DeviceContextBar } from './DeviceContextBar';
@@ -20,6 +20,29 @@ export function QuoteBuilder({ products }: { products: Product[] }) {
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'name'>('price_asc');
   const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Live real-time response if quote page is disabled while active
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('konark_settings_channel');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'QUOTE_VISIBILITY_CHANGED' && event.data.enabled === false) {
+          window.location.reload();
+        }
+      };
+    }
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'konark_quote_enabled' && e.newValue === 'false') {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   const handleToggleSpecFilter = (key: string, value: string) => {
     setSpecFilters((prev) => {

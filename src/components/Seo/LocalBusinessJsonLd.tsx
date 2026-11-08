@@ -43,7 +43,7 @@ export function LocalBusinessJsonLd() {
       "@type": "City",
       name: "Rajkot",
     },
-    sameAs: [BUSINESS.facebookUrl],
+    sameAs: [BUSINESS.facebookUrl, BUSINESS.instagramUrl, BUSINESS.youtubeUrl],
   };
 
   // Escape '<' as '\u003c' to prevent script injection vulnerabilities

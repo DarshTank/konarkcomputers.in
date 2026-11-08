@@ -118,6 +118,19 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+  background: #ffffff;
+  color: var(--color-dark);
+  border: 1.5px solid rgba(26, 26, 46, 0.16);
+  font-weight: 700;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.contactBtn:hover {
+  background: var(--color-teal);
+  color: #ffffff;
+  border-color: var(--color-teal);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 150, 156, 0.25);
 }
 
 .relatedLinksList {

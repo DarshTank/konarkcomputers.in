@@ -249,3 +249,15 @@
   color: var(--color-accent);
   font-weight: 500;
 }
+
+.devLink {
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.devLink:hover {
+  color: var(--color-accent);
+}

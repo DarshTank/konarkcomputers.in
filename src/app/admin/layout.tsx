@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { getClientAuth } from '@/lib/firebase/client';
 import {
   LayoutDashboard,
   Package,
@@ -15,7 +16,6 @@ import {
   FileSpreadsheet,
   History,
   LogOut,
-  ExternalLink,
   Menu,
   X,
 } from 'lucide-react';
@@ -38,11 +38,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   // Close mobile drawer on route transition
   useEffect(() => {
     setIsMobileNavOpen(false);
   }, [pathname]);
+
+  // Fetch logged-in admin email from Client Auth and session API
+  useEffect(() => {
+    try {
+      const auth = getClientAuth();
+      if (auth.currentUser?.email) {
+        setUserEmail(auth.currentUser.email);
+      }
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      });
+      return () => unsubscribe();
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/admin/auth/session')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.email) {
+          setUserEmail(data.email);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Don't show sidebar on login page
   if (pathname === '/admin/login') {
@@ -68,10 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {isMobileNavOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-        <span className={styles.mobileBrandTitle}>Konark Admin</span>
-        <Link href="/quote" target="_blank" className={styles.mobileQuotePill} title="Open Live Quote">
-          /quote
-        </Link>
+        {/* <span className={styles.mobileBrandTitle}>Konark Admin</span> */}
       </header>
 
       {/* Mobile Backdrop */}
@@ -84,6 +109,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar (Desktop sticky + Mobile slide-out drawer) */}
       <aside className={`${styles.sidebar} ${isMobileNavOpen ? styles.sidebarOpen : ''}`}>
+        {/* Desktop Sidebar Header */}
+        <div className={styles.desktopSidebarHeader}>
+          <div className={styles.sidebarBrand}>
+            {/* <span className={styles.sidebarLogo}>Konark</span> */}
+            <span className={styles.sidebarLogo}>Manage Your Business</span>
+
+            {/* <span className={styles.sidebarBadge}>Admin</span> */}
+          </div>
+          {/* <span className={styles.sidebarSubtitle}>Store Operations Console</span> */}
+        </div>
+
+        {/* Mobile Drawer Header */}
         <div className={styles.mobileDrawerHeader}>
           <span style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: '#ffffff' }}>
             Store Navigation
@@ -137,15 +174,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <Link
-            href="/quote"
-            target="_blank"
-            className={styles.navItem}
-            style={{ marginBottom: '8px' }}
-          >
-            <ExternalLink size={14} />
-            <span>View Live /quote</span>
-          </Link>
+          {userEmail && (
+            <div className={styles.userEmailText} title={userEmail}>
+              {userEmail}
+            </div>
+          )}
           <button type="button" onClick={handleLogout} className={styles.logoutBtn}>
             <LogOut size={14} />
             <span>Sign Out</span>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { TaxSettings, CompanySettings } from '@/lib/db/types';
-import { Settings, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Save, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import styles from '../admin.module.css';
 
 export default function AdminSettingsPage() {
@@ -30,6 +30,7 @@ export default function AdminSettingsPage() {
 
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [quoteEnabled, setQuoteEnabled] = useState(true);
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -37,6 +38,13 @@ export default function AdminSettingsPage() {
       .then((data) => {
         if (data.tax) setTax(data.tax);
         if (data.company) setCompany(data.company);
+      })
+      .catch(() => {});
+
+    fetch('/api/admin/settings/quote')
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.enabled === 'boolean') setQuoteEnabled(data.enabled);
       })
       .catch(() => {});
   }, []);
@@ -47,14 +55,30 @@ export default function AdminSettingsPage() {
     setSavedSuccess(false);
 
     try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tax, company }),
-      });
+      const [resSettings, resQuote] = await Promise.all([
+        fetch('/api/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tax, company }),
+        }),
+        fetch('/api/admin/settings/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: quoteEnabled }),
+        }),
+      ]);
 
-      if (res.ok) {
+      if (resSettings.ok && resQuote.ok) {
         setSavedSuccess(true);
+        try {
+          localStorage.setItem('konark_quote_enabled', String(quoteEnabled));
+          window.dispatchEvent(new CustomEvent('konark:quote-visibility', { detail: { enabled: quoteEnabled } }));
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('konark_settings_channel');
+            bc.postMessage({ type: 'QUOTE_VISIBILITY_CHANGED', enabled: quoteEnabled });
+            bc.close();
+          }
+        } catch {}
         setTimeout(() => setSavedSuccess(false), 4000);
       } else {
         alert('Failed to save settings');
@@ -284,6 +308,67 @@ export default function AdminSettingsPage() {
                   className={styles.formInput}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Public Quotation System Visibility */}
+          <div className={styles.settingsCard}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                  <h2 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--color-dark)' }}>
+                    Public Quotation System
+                  </h2>
+                  <code className={styles.featureSlugTag}>/quote</code>
+                  <span
+                    className={`${styles.featureStatusBadge} ${
+                      quoteEnabled ? styles.featureStatusActive : styles.featureStatusInactive
+                    }`}
+                  >
+                    <span
+                      className={`${styles.featureStatusDot} ${
+                        quoteEnabled ? styles.featureStatusDotActive : styles.featureStatusDotInactive
+                      }`}
+                    />
+                    {quoteEnabled ? 'Live on Website' : 'Hidden from Website (404)'}
+                  </span>
+                </div>
+                <p style={{ fontSize: 'var(--text-xs)', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  {quoteEnabled
+                    ? 'Quotation builder link is visible in the main Navbar. URL /quote is active.'
+                    : 'Quotation builder is hidden from the Navbar. Anyone entering /quote in the URL bar gets 404 (Not Found).'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={quoteEnabled}
+                aria-label="Toggle Public Quotation Page"
+                onClick={() => setQuoteEnabled((prev) => !prev)}
+                className={styles.switchToggleWrap}
+              >
+                <div
+                  className={`${styles.switchTrack} ${
+                    quoteEnabled ? styles.switchTrackActive : styles.switchTrackInactive
+                  }`}
+                >
+                  <div
+                    className={`${styles.switchThumb} ${
+                      quoteEnabled ? styles.switchThumbActive : styles.switchThumbInactive
+                    }`}
+                  >
+                    {quoteEnabled ? (
+                      <Eye size={12} color="var(--color-teal)" />
+                    ) : (
+                      <EyeOff size={12} color="#94a3b8" />
+                    )}
+                  </div>
+                </div>
+                <span className={styles.switchLabel}>
+                  {quoteEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </button>
             </div>
           </div>
 

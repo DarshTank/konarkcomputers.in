@@ -465,34 +465,49 @@
 }
 
 .qtyStepper {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  border: 1px solid var(--color-border);
+  justify-content: space-between;
+  width: 100%;
+  min-height: 36px;
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-full);
   background: var(--color-surface);
-  overflow: hidden;
+  padding: 2px 4px;
+  box-sizing: border-box;
 }
 
 .stepperBtn {
   width: 28px;
   height: 28px;
+  min-width: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--text-sm);
   color: var(--color-dark);
   font-weight: bold;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .stepperBtn:hover {
   background: var(--color-border);
+  color: var(--color-teal);
 }
 
 .stepperQty {
-  width: 24px;
+  flex: 1;
   text-align: center;
   font-size: var(--text-xs);
-  font-weight: bold;
+  font-weight: 700;
+  color: var(--color-dark);
+  white-space: nowrap;
+  padding: 0 8px;
+  user-select: none;
 }
 
 .addBtn {

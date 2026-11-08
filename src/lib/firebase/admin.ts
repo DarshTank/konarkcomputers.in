@@ -46,6 +46,9 @@ export function getAdminDb(): Firestore | null {
     if (!app) return null;
     const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'default';
     _db = getFirestore(app, dbId);
+    try {
+      _db.settings({ ignoreUndefinedProperties: true });
+    } catch {}
   }
   return _db;
 }

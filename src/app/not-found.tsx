@@ -3,17 +3,24 @@ import { Phone, ArrowRight, Home, Wrench, Package, HelpCircle } from "lucide-rea
 import { BUSINESS } from "@/lib/business";
 
 export default function NotFound() {
+  const quickLinks = [
+    { href: "/", label: "Home Page", icon: Home, desc: "Explore computer workshop" },
+    { href: "/services/laptop-repair-rajkot", label: "Laptop Repair", icon: Wrench, desc: "Screen, battery & hardware" },
+    { href: "/products", label: "Parts & Chargers", icon: Package, desc: "Genuine adapters & storage" },
+    { href: "/contact", label: "Contact & Location", icon: HelpCircle, desc: "Workshop address & phone" },
+  ];
+
   return (
     <div
       style={{
         padding: "clamp(4rem, 8vw, 8rem) 0",
         background: "var(--color-surface)",
-        minHeight: "70vh",
+        minHeight: "75vh",
         display: "flex",
         alignItems: "center",
       }}
     >
-      <div className="container" style={{ maxWidth: "760px", textAlign: "center" }}>
+      <div className="container" style={{ maxWidth: "780px", textAlign: "center" }}>
         <span
           style={{
             fontFamily: "var(--font-display)",
@@ -22,6 +29,7 @@ export default function NotFound() {
             lineHeight: 1,
             display: "block",
             marginBottom: "var(--space-2)",
+            fontWeight: 700,
           }}
         >
           404
@@ -42,6 +50,8 @@ export default function NotFound() {
             color: "var(--color-text-secondary)",
             lineHeight: 1.8,
             marginBottom: "var(--space-8)",
+            marginLeft: "auto",
+            marginRight: "auto",
           }}
         >
           The page you are looking for may have moved, been renamed, or is temporarily unavailable. Please explore our main sections below or contact our Rajkot workshop directly.
@@ -50,50 +60,78 @@ export default function NotFound() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
             gap: "var(--space-4)",
             marginBottom: "var(--space-8)",
-            textAlign: "left",
           }}
         >
-          <Link
-            href="/"
-            className="btn btn--outline"
-            style={{ justifyContent: "flex-start", gap: "var(--space-3)", padding: "var(--space-4)" }}
-          >
-            <Home size={18} style={{ color: "var(--color-accent)" }} />
-            <span>Home Page</span>
-          </Link>
-          <Link
-            href="/services/laptop-repair-rajkot"
-            className="btn btn--outline"
-            style={{ justifyContent: "flex-start", gap: "var(--space-3)", padding: "var(--space-4)" }}
-          >
-            <Wrench size={18} style={{ color: "var(--color-accent)" }} />
-            <span>Laptop Repair</span>
-          </Link>
-          <Link
-            href="/products"
-            className="btn btn--outline"
-            style={{ justifyContent: "flex-start", gap: "var(--space-3)", padding: "var(--space-4)" }}
-          >
-            <Package size={18} style={{ color: "var(--color-accent)" }} />
-            <span>Parts &amp; Chargers</span>
-          </Link>
-          <Link
-            href="/contact"
-            className="btn btn--outline"
-            style={{ justifyContent: "flex-start", gap: "var(--space-3)", padding: "var(--space-4)" }}
-          >
-            <HelpCircle size={18} style={{ color: "var(--color-accent)" }} />
-            <span>Contact &amp; Location</span>
-          </Link>
+          {quickLinks.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  padding: "16px 18px",
+                  background: "#ffffff",
+                  border: "1px solid rgba(26, 26, 46, 0.12)",
+                  borderRadius: "var(--radius-lg)",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  transition: "all var(--duration-fast)",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "var(--radius-md)",
+                    background: "rgba(15, 150, 156, 0.1)",
+                    color: "var(--color-teal)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={20} />
+                </div>
+                <div style={{ textAlign: "left", flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-body)",
+                      fontWeight: 700,
+                      fontSize: "0.95rem",
+                      color: "var(--color-dark)",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {item.label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "#64748b",
+                      marginTop: "2px",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {item.desc}
+                  </div>
+                </div>
+                <ArrowRight size={16} style={{ color: "#94a3b8", flexShrink: 0 }} />
+              </Link>
+            );
+          })}
         </div>
 
         <div
           style={{
-            background: "var(--color-white)",
-            border: "1px solid var(--color-border)",
+            background: "#ffffff",
+            border: "1px solid rgba(26, 26, 46, 0.1)",
             borderRadius: "var(--radius-lg)",
             padding: "var(--space-6)",
             display: "inline-flex",
@@ -101,9 +139,10 @@ export default function NotFound() {
             gap: "var(--space-4)",
             flexWrap: "wrap",
             justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
-          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)" }}>
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)", fontWeight: 500 }}>
             Need immediate computer assistance in Rajkot?
           </span>
           <a
@@ -119,4 +158,3 @@ export default function NotFound() {
     </div>
   );
 }
-

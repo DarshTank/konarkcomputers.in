@@ -155,7 +155,7 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className={styles.cardActions}>
         {qtyInCart > 0 ? (
-          <div className={styles.qtyStepper} style={{ width: '100%', justifyContent: 'space-between' }}>
+          <div className={styles.qtyStepper}>
             <button
               type="button"
               className={styles.stepperBtn}

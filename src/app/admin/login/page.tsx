@@ -62,6 +62,15 @@ function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     setError(null);
+
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    if (!apiKey) {
+      setError(
+        'Missing NEXT_PUBLIC_FIREBASE_API_KEY in your deployment environment variables. Please add your Firebase credentials to your hosting dashboard (e.g., Vercel Project Settings > Environment Variables) and trigger a redeploy.'
+      );
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -85,11 +94,15 @@ function LoginForm() {
       await handleLoginSuccess(idToken);
     } catch (err: any) {
       console.error('Google Sign-In Error:', err);
-      if (err?.code === 'auth/popup-closed-by-user') {
+      if (err?.code === 'auth/invalid-api-key') {
+        setError(
+          'Firebase Error (auth/invalid-api-key): The Firebase API key is missing or invalid on your deployed site. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is configured in your hosting platform (Vercel) and redeploy.'
+        );
+      } else if (err?.code === 'auth/popup-closed-by-user') {
         setError('Sign-in cancelled.');
       } else if (err?.code === 'auth/unauthorized-domain') {
         setError(
-          'This domain is not authorized in Firebase Console > Authentication > Settings > Authorized Domains. Please add localhost or your production domain.'
+          'Firebase Error (auth/unauthorized-domain): "konarkcomputers.in" is not authorized. Please go to Firebase Console > Authentication > Settings > Authorized Domains and add "konarkcomputers.in".'
         );
       } else {
         setError(err?.message || 'Google sign-in failed. Please try again.');

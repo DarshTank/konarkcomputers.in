@@ -202,6 +202,12 @@ export interface CompanySettings {
   footerNote: string;
 }
 
+export interface QuoteSettings {
+  enabled: boolean; // Controls whether /quote is accessible and visible in navbar
+  updatedAt?: FirestoreTimestamp;
+  updatedBy?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Quote
 // ---------------------------------------------------------------------------
@@ -223,6 +229,7 @@ export interface QuoteItemSnapshot {
   productId: string;
   sku: string;
   name: string;
+  imageUrl?: string;
   categoryName: string;
   brandName: string;
   specsSummary: string;

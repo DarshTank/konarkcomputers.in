@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Phone, Mail, Clock, Facebook, ArrowRight } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube, ArrowRight } from "lucide-react";
 import { BUSINESS } from "@/lib/business";
 import styles from "./Footer.module.css";
 
@@ -124,8 +124,29 @@ export function Footer() {
               rel="noopener noreferrer"
               className={styles.socialBtn}
               aria-label="Facebook"
+              title="Konark Computers on Facebook"
             >
               <Facebook size={18} />
+            </a>
+            <a
+              href={BUSINESS.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialBtn}
+              aria-label="Instagram"
+              title="Konark Computers on Instagram"
+            >
+              <Instagram size={18} />
+            </a>
+            <a
+              href={BUSINESS.youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialBtn}
+              aria-label="YouTube"
+              title="Konark Computers on YouTube"
+            >
+              <Youtube size={18} />
             </a>
           </div>
         </div>
@@ -150,7 +171,17 @@ export function Footer() {
       <div className={styles.bottomBar}>
         <div className={`container ${styles.bottomBarInner}`}>
           <span>© {new Date().getFullYear()} Konark Computers. All Rights Reserved.</span>
-          <span className={styles.credit}>Est. 1999 — Rajkot, Gujarat</span>
+          <span className={styles.credit}>
+            Est. 1999 — Rajkot, Gujarat &nbsp;•&nbsp; Developed by{' '}
+            <a
+              href="https://www.darshtank.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.devLink}
+            >
+              Darsh Tank
+            </a>
+          </span>
         </div>
       </div>
     </footer>

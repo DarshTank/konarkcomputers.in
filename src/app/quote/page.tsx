@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getActiveCatalog } from '@/lib/db/catalog';
+import { isQuoteEnabled } from '@/lib/db/settings';
 import { QuoteProvider } from '@/contexts/QuoteContext';
 import { QuoteBuilder } from './components/QuoteBuilder';
 import { BUSINESS } from '@/lib/business';
@@ -19,8 +21,15 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export default async function QuotePage() {
+  const isEnabled = await isQuoteEnabled();
+  if (!isEnabled) {
+    notFound();
+  }
+
   const catalog = await getActiveCatalog();
 
   return (

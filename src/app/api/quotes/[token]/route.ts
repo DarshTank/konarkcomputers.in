@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase/admin';
-import type { Quote } from '@/lib/db/types';
+import { getQuoteByToken } from '@/lib/db/quotes';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -12,24 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Token missing' }, { status: 400 });
     }
 
-    let quote: Quote | null = null;
-
-    try {
-      const db = getAdminDb();
-      if (db) {
-        const snapshot = await db
-          .collection('quotes')
-          .where('publicToken', '==', token)
-          .limit(1)
-          .get();
-
-        if (!snapshot.empty) {
-          quote = snapshot.docs[0].data() as Quote;
-        }
-      }
-    } catch (e) {
-      console.warn('Error reading quote from Firestore:', e);
-    }
+    const quote = await getQuoteByToken(token);
 
     if (!quote) {
       return NextResponse.json({ error: 'Quotation not found or link expired.' }, { status: 404 });

@@ -155,8 +155,8 @@ export function LandingPageTemplate({ content }: LandingPageTemplateProps) {
                     <Phone size={18} />
                     Call {BUSINESS.phoneDisplay}
                   </a>
-                  <Link href="/contact" className={`btn btn--outline ${styles.contactBtn}`}>
-                    Visit Workshop &amp; Map
+                  <Link href="/contact" className={`btn ${styles.contactBtn}`}>
+                    Visit Today
                     <ArrowRight size={16} />
                   </Link>
 

@@ -273,6 +273,20 @@ p {
   border: 1.5px solid rgba(245, 240, 232, 0.3);
 }
 
+.btn--outline-dark {
+  background: var(--color-white);
+  color: var(--color-dark);
+  border: 1.5px solid var(--color-border);
+}
+
+.btn--outline-dark:hover {
+  border-color: var(--color-teal);
+  color: var(--color-teal);
+  background: var(--color-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
 .btn--outline:hover {
   /* Color Change: border, text, and tinted backdrop */
   border-color: var(--color-accent);

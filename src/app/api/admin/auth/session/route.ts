@@ -70,6 +70,37 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const sessionCookie = request.cookies.get('__session')?.value;
+    if (!sessionCookie) {
+      return NextResponse.json({ email: null }, { status: 401 });
+    }
+
+    let userEmail: string | null = null;
+    const auth = getAdminAuth();
+    if (auth) {
+      try {
+        const decoded = await auth.verifySessionCookie(sessionCookie, true);
+        userEmail = decoded.email || null;
+      } catch {
+        try {
+          const decodedToken = await auth.verifyIdToken(sessionCookie);
+          userEmail = decodedToken.email || null;
+        } catch {
+          userEmail = extractEmailFromJwt(sessionCookie);
+        }
+      }
+    } else {
+      userEmail = extractEmailFromJwt(sessionCookie);
+    }
+
+    return NextResponse.json({ email: userEmail });
+  } catch {
+    return NextResponse.json({ email: null });
+  }
+}
+
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
   response.cookies.delete('__session');

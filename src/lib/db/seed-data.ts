@@ -9,6 +9,7 @@ import type {
   ServiceItem,
   TaxSettings,
   CompanySettings,
+  QuoteSettings,
   Product,
 } from './types';
 
@@ -2268,6 +2269,10 @@ export const SEED_COMPANY_SETTINGS: CompanySettings = {
   "upiId": "konarkcomputers@upi",
   "termsAndConditions": "1. Quotation valid for 7 days from issue date.\n2. Prices subject to stock availability.\n3. Hardware warranty as per OEM manufacturer terms.\n4. Disputes subject to Rajkot jurisdiction.",
   "footerNote": "Konark Computers — Serving Rajkot Since 1999."
+};
+
+export const SEED_QUOTE_SETTINGS: QuoteSettings = {
+  "enabled": true
 };
 
 export const SEED_PRODUCTS: Product[] = [

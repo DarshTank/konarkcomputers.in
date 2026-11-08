@@ -92,7 +92,21 @@ const pageContent: LandingPageContent = {
   ],
 };
 
-export default function SsdUpgradeRajkotPage() {
-  return <LandingPageTemplate content={pageContent} />;
+import { isQuoteEnabled } from "@/lib/db/settings";
+
+export default async function SsdUpgradeRajkotPage() {
+  const quoteEnabled = await isQuoteEnabled();
+  const dynamicContent = {
+    ...pageContent,
+    relatedLinks: pageContent.relatedLinks.map((link) =>
+      link.href === "/quote"
+        ? quoteEnabled
+          ? link
+          : { label: "Contact Workshop & Repairs", href: "/contact" }
+        : link
+    ),
+  };
+
+  return <LandingPageTemplate content={dynamicContent} />;
 }
 

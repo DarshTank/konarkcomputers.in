@@ -7,19 +7,89 @@ import { Menu, X, Phone, MapPin, Clock } from "lucide-react";
 import { BUSINESS } from "@/lib/business";
 import styles from "./Navbar.module.css";
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "Company" },
   { href: "/services", label: "Services" },
   { href: "/products", label: "Products" },
-  { href: "/quote", label: "Get a Quote" },
+  { href: "/quote", label: "Get a Quote", isQuote: true },
   { href: "/contact", label: "Contact" },
 ];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [quoteEnabled, setQuoteEnabled] = useState<boolean>(true);
   const pathname = usePathname();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Immediately read from localStorage on mount (client-side only, prevents SSR hydration mismatch)
+    try {
+      const cached = localStorage.getItem("konark_quote_enabled");
+      if (cached !== null) {
+        setQuoteEnabled(cached === "true");
+      }
+    } catch {}
+
+    const syncQuoteSetting = () => {
+      fetch("/api/settings/quote", { cache: "no-store" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted && typeof data.enabled === "boolean") {
+            setQuoteEnabled(data.enabled);
+            try {
+              localStorage.setItem("konark_quote_enabled", String(data.enabled));
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    };
+
+    // 1. Initial sync from server
+    syncQuoteSetting();
+
+    // 2. Custom event listener (immediate sync in same window)
+    const handleCustomEvent = (e: any) => {
+      if (typeof e.detail?.enabled === "boolean") {
+        setQuoteEnabled(e.detail.enabled);
+      }
+    };
+    window.addEventListener("konark:quote-visibility", handleCustomEvent);
+
+    // 3. Storage event listener (sync across tabs in same browser)
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === "konark_quote_enabled" && e.newValue !== null) {
+        setQuoteEnabled(e.newValue === "true");
+      }
+    };
+    window.addEventListener("storage", handleStorageEvent);
+
+    // 4. BroadcastChannel listener (instant low-latency cross-tab communication)
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== "undefined") {
+      bc = new BroadcastChannel("konark_settings_channel");
+      bc.onmessage = (event) => {
+        if (event.data?.type === "QUOTE_VISIBILITY_CHANGED" && typeof event.data.enabled === "boolean") {
+          setQuoteEnabled(event.data.enabled);
+        }
+      };
+    }
+
+    // 5. Polling every 2.5s for instant multi-client/cross-device sync without refresh
+    const pollInterval = setInterval(syncQuoteSetting, 2500);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("konark:quote-visibility", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+      if (bc) bc.close();
+      clearInterval(pollInterval);
+    };
+  }, [pathname]);
+
+  const navLinks = baseNavLinks.filter((link) => !link.isQuote || quoteEnabled);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
