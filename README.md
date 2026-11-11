@@ -1,4 +1,4 @@
-# Konark Computers — Smart Quotation System & Web Application
+# Konark Computers — Official Web Platform & IT Solutions Portal
 
 ![Next.js 15](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)
 ![React 19](https://img.shields.io/badge/React-19.0.0-blue?style=for-the-badge&logo=react)
@@ -6,32 +6,36 @@
 ![Firestore](https://img.shields.io/badge/Database-Firebase_Firestore-orange?style=for-the-badge&logo=firebase)
 ![Vitest](https://img.shields.io/badge/Tested_with-Vitest-yellow?style=for-the-badge&logo=vitest)
 
-Official web platform for **Konark Computers** — Rajkot's trusted IT hardware, laptop repair, and computer solutions provider established in 1999 (27+ years of service).
+The official web platform and digital customer portal for **Konark Computers** — Rajkot's trusted IT hardware, laptop repair, and computer solutions provider established in 1999 (27+ years of service).
 
 ---
 
 ## 🚀 Key Modules
 
-### 1. Smart Quotation Engine (`/quote`)
-- **Device Context Discovery**: Choose between Desktop PC or Laptop (with OEM brand & model auto-narrowing).
-- **Multi-Category Hardware Catalog**: RAM, Storage (SSD/HDD), Laptop Chargers, Laptop Screens, Batteries, Keyboards, Mice, and Desktop Keyboards.
-- **Data-Driven 3-Layer Compatibility Filter**:
+### 1. Production Web Platform & Service Portal
+- **Service & Product Showcase**: Dedicated hubs for desktop/laptop repair, hardware upgrades (SSD, RAM, screens, batteries, chargers), networking, and troubleshooting.
+- **Programmatic Local SEO Engine**: High-conversion landing pages optimized for regional search dominance in Rajkot (`/services/*`, `/products/*`) embedded with structured Schema.org (`LocalBusiness`, `BreadcrumbList`) JSON-LD microdata.
+- **Inquiry & Omnichannel Dispatch**: Direct WhatsApp chat integration and TLS SMTP automated email pipelines (`src/lib/mailer.ts` over Gmail port 465) with rate limiting and honeypot protection.
+- **Precision Workshop Design System**: Responsive, high-contrast dark theme built with modular CSS, fluid typography, and Framer Motion micro-interactions.
+
+### 2. Admin Backoffice (`/admin`)
+- **Protected Role-Based Access (RBAC)**: Secure multi-tier authentication (`admin` and `staff`) validated server-side using Firebase Admin SDK and Firebase Custom Claims.
+- **Catalog & Inventory Control**: Full CRUD for products, repair services, categories, and brands with dynamic specification fields and inline price/stock adjustments.
+- **Audit Trail (`/admin/audit`)**: Immutable log recording product modifications, price variations, and operational status histories with before/after state diffs.
+- **Tax & Business Configuration**: Live toggle between GST-inclusive and GST-exclusive display modes, store warranty policies, and company banking details.
+- **Vercel Blob Media Pipeline**: Asset upload infrastructure configured behind the `NEXT_PUBLIC_ENABLE_PRODUCT_IMAGES` feature flag.
+
+### 3. Smart Quotation Engine (`/quote`) — *[In Active Development]*
+> **Note**: An upcoming feature currently in active development to automate client estimates and eliminate hardware part mismatches.
+- **Device Context Discovery**: Auto-detects device type (Desktop PC vs Laptop) and narrows down OEM brand and model compatibility.
+- **3-Layer Compatibility Engine**:
   - **Layer 1 (Generic Spec Matching)**: Auto-evaluates attributes flagged as `compatKey` (e.g. `memoryType`, `memoryFormFactor`, `connectorType`, `wattage`, `screenPin`, `screenSize`).
   - **Layer 2 (Explicit Rules in Firestore)**: Configurable rules with `sourceField`, `targetField`, operator (`eq`, `in`, `intersects`, `lte`, `gte`), and severity (`block` or `warn`).
   - **Layer 3 (Brand & Model Specifics)**: Normalizes OEM tokens to verify model-level compatibility for laptops.
   - **Status Categories**: `COMPATIBLE` (highlighted & sorted first), `INCOMPATIBLE` (dimmed with explanation; toggleable), `NEUTRAL` (unrelated items remain accessible), `CHECK` (needs workshop confirmation).
 - **Deterministic & High Performance**: Evaluates 2,000+ candidate items in under 50ms.
-- **Server-Authoritative Pricing**: Money is stored strictly as integer **PAISE** (never floating point). Computes taxable base, intra-state CGST+SGST (Gujarat state code 24) or inter-state IGST, and whole-rupee round-off.
-- **Quotation Page (`/quote/[token]`)**: Unguessable token, noindex for privacy, with instant PDF generation, email delivery, and WhatsApp sharing.
-
-### 2. Admin Backoffice (`/admin`)
-- **Protected Access**: Role-based access control (`admin` and `staff`) verified server-side with Firebase Admin SDK.
-- **Dashboard**: Live quote inquiries, pending follow-ups, and low stock notifications.
-- **Product Management**: Full CRUD, inline price/stock editing, CSV export/import, dynamic specification fields, and duplicate item actions.
-- **Compatibility Rules Manager**: Form editor and live **"Test a Pair" Sandbox** to verify cross-category compatibility before publishing.
-- **Tax & Company Settings**: Live toggle between GST-inclusive and GST-exclusive display modes, validity periods, and banking details.
-- **Audit Trail (`/admin/audit`)**: Immutable log tracking price updates, stock changes, and quotation status history.
-- **Vercel Blob Image Pipeline**: Fully implemented behind the `NEXT_PUBLIC_ENABLE_PRODUCT_IMAGES` feature flag.
+- **Server-Authoritative Pricing**: Money is stored strictly as integer **PAISE** (eliminating floating-point drift). Computes taxable base, intra-state CGST+SGST (Gujarat state code 24) or inter-state IGST, and whole-rupee round-off.
+- **Digital Quote Delivery (`/quote/[token]`)**: Unguessable tokenized URLs with strict noindex privacy, zero-DOM serverless PDF generation (`pdf-lib`), and instant WhatsApp/Email dispatch.
 
 ---
 
@@ -44,7 +48,7 @@ Official web platform for **Konark Computers** — Rajkot's trusted IT hardware,
 | **Styling** | Vanilla CSS Modules & Precision Workshop Design Tokens |
 | **Database** | Google Cloud Firestore (via `firebase-admin` server SDK) |
 | **Authentication** | Firebase Authentication (Custom Claims for Admin/Staff) |
-| **PDF Generation** | `pdf-lib` (Serverless compatible, zero-DOM PDF generation) |
+| **PDF Generation** | `pdf-lib` (Serverless-compatible, zero-DOM PDF generation) |
 | **Email Service** | Node.js TLS SMTP (`src/lib/mailer.ts` over Gmail port 465) |
 | **Validation** | Zod (End-to-end type validation for DB & APIs) |
 | **Unit Testing** | Vitest (Full suite for pricing calculations and compat rules) |
@@ -76,7 +80,10 @@ npx tsx scripts/seed.ts
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the site, [http://localhost:3000/quote](http://localhost:3000/quote) for the quotation builder, or [http://localhost:3000/admin](http://localhost:3000/admin) for the admin console.
+Open:
+- Main Platform: [http://localhost:3000](http://localhost:3000)
+- Admin Backoffice: [http://localhost:3000/admin](http://localhost:3000/admin)
+- Quotation Builder *(Beta / In Development)*: [http://localhost:3000/quote](http://localhost:3000/quote)
 
 ---
 
@@ -105,9 +112,9 @@ npm test
 - **Client Writes**: **Completely blocked** across all Firestore collections. All updates are handled server-authoritative by Next.js route handlers verified with `firebase-admin`.
 - **Quotations**: Private. Quotes can only be retrieved server-side via unguessable public tokens or by authenticated staff.
 - **Admin Audit**: Every product modification, price edit, and tax change is timestamped and audited with before/after state diffs.
-- **Anti-Bot Protection**: Rate limiting per IP on quote creation and hidden honeypot fields.
+- **Anti-Bot Protection**: Rate limiting per IP on inquiries and quote creation, complemented by hidden honeypot fields.
 
 ---
 
 ## 📄 Quotation Document Notice
-All quotes generated are officially marked as **"Quotation / Estimate"**, not a tax invoice. Prices reflect physical stock availability and carry valid manufacturer warranties backed by Konark Computers at Rajkot, Gujarat.
+All quotes generated via the platform are officially marked as **"Quotation / Estimate"**, not a tax invoice. Prices reflect physical stock availability and carry valid manufacturer warranties backed by Konark Computers at Rajkot, Gujarat.
