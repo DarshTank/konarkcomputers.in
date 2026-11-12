@@ -59,8 +59,10 @@ export async function POST(request: NextRequest) {
     // Revalidate paths & tags across the application
     try {
       revalidateTag('catalog');
+      revalidatePath('/', 'layout');
       revalidatePath('/quote');
       revalidatePath('/admin');
+      revalidatePath('/admin/settings');
       revalidatePath('/products');
       revalidatePath('/services');
       revalidatePath('/');

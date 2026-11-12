@@ -10,6 +10,11 @@ import {
   SEED_COMPANY_SETTINGS,
   SEED_QUOTE_SETTINGS,
 } from './seed-data';
+import {
+  getQuoteSettings,
+  getCompanySettings,
+  getTaxSettings,
+} from './settings';
 import type {
   Category,
   Brand,
@@ -37,8 +42,16 @@ export interface CatalogData {
 /**
  * Get active catalog data.
  * Checks Firestore with fallback to seed data.
+ * Settings (tax, company, quote) are always loaded via the multi-tier settings store.
  */
 export async function getActiveCatalog(): Promise<CatalogData> {
+  // Always load settings using the unified multi-tier settings loader
+  const [taxSettings, companySettings, quoteSettings] = await Promise.all([
+    getTaxSettings().catch(() => SEED_TAX_SETTINGS),
+    getCompanySettings().catch(() => SEED_COMPANY_SETTINGS),
+    getQuoteSettings().catch(() => SEED_QUOTE_SETTINGS),
+  ]);
+
   let db = null;
   try {
     db = getAdminDb();
@@ -54,59 +67,49 @@ export async function getActiveCatalog(): Promise<CatalogData> {
       products: SEED_PRODUCTS as unknown as Product[],
       rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
       services: SEED_SERVICES as unknown as ServiceItem[],
-      taxSettings: SEED_TAX_SETTINGS,
-      companySettings: SEED_COMPANY_SETTINGS,
-      quoteSettings: SEED_QUOTE_SETTINGS,
+      taxSettings,
+      companySettings,
+      quoteSettings,
     };
   }
 
   try {
-    const [catSnap, brandSnap, attrSnap, prodSnap, ruleSnap, srvSnap, taxSnap, compSnap, quoteSnap] =
+    const [catSnap, brandSnap, attrSnap, prodSnap, ruleSnap, srvSnap] =
       await Promise.all([
-        db.collection('categories').where('isActive', '==', true).orderBy('sortOrder', 'asc').get(),
-        db.collection('brands').where('isActive', '==', true).get(),
-        db.collection('attributeDefinitions').orderBy('displayOrder', 'asc').get(),
-        db.collection('products').where('isActive', '==', true).get(),
-        db.collection('compatibilityRules').where('isActive', '==', true).get(),
-        db.collection('services').where('isActive', '==', true).get(),
-        db.collection('settings').doc('tax').get(),
-        db.collection('settings').doc('company').get(),
-        db.collection('settings').doc('quote').get(),
+        // Query categories without composite index requirement, sort in JS
+        db.collection('categories').where('isActive', '==', true).get().catch(() => null),
+        db.collection('brands').where('isActive', '==', true).get().catch(() => null),
+        db.collection('attributeDefinitions').orderBy('displayOrder', 'asc').get().catch(() => null),
+        db.collection('products').where('isActive', '==', true).get().catch(() => null),
+        db.collection('compatibilityRules').where('isActive', '==', true).get().catch(() => null),
+        db.collection('services').where('isActive', '==', true).get().catch(() => null),
       ]);
 
-    const categories = !catSnap.empty
-      ? catSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
+    const categories = catSnap && !catSnap.empty
+      ? catSnap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
       : (SEED_CATEGORIES as unknown as Category[]);
 
-    const brands = !brandSnap.empty
+    const brands = brandSnap && !brandSnap.empty
       ? brandSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
       : (SEED_BRANDS as unknown as Brand[]);
 
-    const attributes = !attrSnap.empty
+    const attributes = attrSnap && !attrSnap.empty
       ? attrSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
       : (SEED_ATTRIBUTES as unknown as AttributeDefinition[]);
 
-    const products = !prodSnap.empty
+    const products = prodSnap && !prodSnap.empty
       ? prodSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
       : (SEED_PRODUCTS as unknown as Product[]);
 
-    const rules = !ruleSnap.empty
+    const rules = ruleSnap && !ruleSnap.empty
       ? ruleSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
       : (SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[]);
 
-    const services = !srvSnap.empty
+    const services = srvSnap && !srvSnap.empty
       ? srvSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
       : (SEED_SERVICES as unknown as ServiceItem[]);
-
-    const taxSettings = taxSnap.exists ? (taxSnap.data() as TaxSettings) : SEED_TAX_SETTINGS;
-    const companySettings = compSnap.exists ? (compSnap.data() as CompanySettings) : SEED_COMPANY_SETTINGS;
-    const quoteSettings = quoteSnap.exists
-      ? {
-          enabled: (quoteSnap.data() as any)?.enabled !== false,
-          updatedAt: (quoteSnap.data() as any)?.updatedAt,
-          updatedBy: (quoteSnap.data() as any)?.updatedBy,
-        }
-      : SEED_QUOTE_SETTINGS;
 
     return {
       categories,
@@ -120,7 +123,7 @@ export async function getActiveCatalog(): Promise<CatalogData> {
       quoteSettings,
     };
   } catch (error) {
-    console.warn('Error fetching catalog from Firestore, falling back to seed data:', error);
+    console.warn('Error fetching catalog collections from Firestore, falling back to seed data:', error);
     return {
       categories: SEED_CATEGORIES as unknown as Category[],
       brands: SEED_BRANDS as unknown as Brand[],
@@ -128,10 +131,9 @@ export async function getActiveCatalog(): Promise<CatalogData> {
       products: SEED_PRODUCTS as unknown as Product[],
       rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
       services: SEED_SERVICES as unknown as ServiceItem[],
-      taxSettings: SEED_TAX_SETTINGS,
-      companySettings: SEED_COMPANY_SETTINGS,
-      quoteSettings: SEED_QUOTE_SETTINGS,
+      taxSettings,
+      companySettings,
+      quoteSettings,
     };
   }
 }
-

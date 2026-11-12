@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getClientAuth } from '@/lib/firebase/client';
+import { getClientAuth, getAdminIdToken } from '@/lib/firebase/client';
 import {
   FileSpreadsheet,
   Globe,
@@ -86,11 +86,10 @@ export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleP
     broadcastChange(nextState);
 
     try {
-      // Collect auth headers if Firebase client user is signed in
+      // Collect auth headers if Firebase admin user is signed in
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       try {
-        const auth = getClientAuth();
-        const idToken = await auth.currentUser?.getIdToken();
+        const idToken = await getAdminIdToken();
         if (idToken) {
           headers['Authorization'] = `Bearer ${idToken}`;
         }
@@ -99,6 +98,7 @@ export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleP
       const res = await fetch('/api/admin/settings/quote', {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ enabled: nextState }),
       });
 

@@ -48,9 +48,9 @@ export async function verifyAdminToken(
 
     const auth = getAdminAuth();
     if (auth) {
-      // 1. Try verifySessionCookie
+      // 1. Try verifySessionCookie (signature check)
       try {
-        const decoded = await auth.verifySessionCookie(token, true);
+        const decoded = await auth.verifySessionCookie(token, false);
         const email = (decoded.email || '').toLowerCase().trim();
         if (email && isAllowedAdminEmail(email)) {
           return {

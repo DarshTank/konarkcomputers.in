@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { put, list } from '@vercel/blob';
 import { getAdminDb } from '../firebase/admin';
 import type { QuoteSettings, CompanySettings, TaxSettings } from './types';
 import {
@@ -10,25 +12,72 @@ import {
 
 // Global memory cache shared across route executions in the same Node process
 declare global {
-  // eslint-disable-next-line no-var
   var __KONARK_QUOTE_SETTINGS__: QuoteSettings | undefined;
-  // eslint-disable-next-line no-var
   var __KONARK_COMPANY_SETTINGS__: CompanySettings | undefined;
-  // eslint-disable-next-line no-var
   var __KONARK_TAX_SETTINGS__: TaxSettings | undefined;
 }
 
-const QUOTE_SETTINGS_FILE = path.join(process.cwd(), '.next', 'konark-quote-settings.json');
-const COMPANY_SETTINGS_FILE = path.join(process.cwd(), '.next', 'konark-company-settings.json');
-const TAX_SETTINGS_FILE = path.join(process.cwd(), '.next', 'konark-tax-settings.json');
+// Local cache files (using os.tmpdir() which is safe in both serverless and local dev)
+const TMP_QUOTE_FILE = path.join(os.tmpdir(), 'konark-quote-settings.json');
+const TMP_COMPANY_FILE = path.join(os.tmpdir(), 'konark-company-settings.json');
+const TMP_TAX_FILE = path.join(os.tmpdir(), 'konark-tax-settings.json');
 
-function ensureDir(filePath: string) {
+const BLOB_QUOTE_KEY = 'konark-settings/quote.json';
+const BLOB_COMPANY_KEY = 'konark-settings/company.json';
+const BLOB_TAX_KEY = 'konark-settings/tax.json';
+
+function safeWriteFile(filePath: string, data: any) {
   try {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
   } catch {}
+}
+
+function safeReadFile(filePath: string): any | null {
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(content);
+    }
+  } catch {}
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Vercel Blob Cloud Storage Fallback Helpers
+// ---------------------------------------------------------------------------
+
+async function writeBlobSettings(pathname: string, data: any): Promise<void> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return;
+  try {
+    await put(pathname, JSON.stringify(data), {
+      access: 'public',
+      addRandomSuffix: false,
+      contentType: 'application/json',
+    });
+  } catch (e) {
+    console.warn(`[Blob Write Error] ${pathname}:`, e);
+  }
+}
+
+async function readBlobSettings<T>(pathname: string): Promise<T | null> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
+  try {
+    const { blobs } = await list({ prefix: pathname });
+    if (blobs && blobs.length > 0) {
+      const match = blobs.find((b) => b.pathname === pathname) || blobs[0];
+      const res = await fetch(match.url, { cache: 'no-store' });
+      if (res.ok) {
+        return (await res.json()) as T;
+      }
+    }
+  } catch (e) {
+    console.warn(`[Blob Read Error] ${pathname}:`, e);
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,13 +89,10 @@ function readLocalQuoteSettings(): QuoteSettings | null {
     if (globalThis.__KONARK_QUOTE_SETTINGS__) {
       return globalThis.__KONARK_QUOTE_SETTINGS__;
     }
-    if (fs.existsSync(QUOTE_SETTINGS_FILE)) {
-      const content = fs.readFileSync(QUOTE_SETTINGS_FILE, 'utf8');
-      const data = JSON.parse(content);
-      if (typeof data.enabled === 'boolean') {
-        globalThis.__KONARK_QUOTE_SETTINGS__ = data;
-        return data;
-      }
+    const fromTmp = safeReadFile(TMP_QUOTE_FILE);
+    if (fromTmp && typeof fromTmp.enabled === 'boolean') {
+      globalThis.__KONARK_QUOTE_SETTINGS__ = fromTmp;
+      return fromTmp;
     }
   } catch {}
   return null;
@@ -55,12 +101,12 @@ function readLocalQuoteSettings(): QuoteSettings | null {
 function writeLocalQuoteSettings(settings: QuoteSettings) {
   try {
     globalThis.__KONARK_QUOTE_SETTINGS__ = settings;
-    ensureDir(QUOTE_SETTINGS_FILE);
-    fs.writeFileSync(QUOTE_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
+    safeWriteFile(TMP_QUOTE_FILE, settings);
   } catch {}
 }
 
 export async function getQuoteSettings(): Promise<QuoteSettings> {
+  // 1. Check Firestore database
   try {
     const db = getAdminDb();
     if (db) {
@@ -73,6 +119,7 @@ export async function getQuoteSettings(): Promise<QuoteSettings> {
           updatedBy: data?.updatedBy,
         };
         globalThis.__KONARK_QUOTE_SETTINGS__ = settings;
+        writeLocalQuoteSettings(settings);
         return settings;
       }
     }
@@ -80,15 +127,27 @@ export async function getQuoteSettings(): Promise<QuoteSettings> {
     console.warn('Error reading quote settings from Firestore:', e);
   }
 
+  // 2. Check Vercel Blob cloud persistence (works across all serverless lambdas)
+  const fromBlob = await readBlobSettings<QuoteSettings>(BLOB_QUOTE_KEY);
+  if (fromBlob && typeof fromBlob.enabled === 'boolean') {
+    globalThis.__KONARK_QUOTE_SETTINGS__ = fromBlob;
+    writeLocalQuoteSettings(fromBlob);
+    return fromBlob;
+  }
+
+  // 3. Check memory & local disk cache
   const local = readLocalQuoteSettings();
   if (local) return local;
 
+  // 4. Default fallback
   return SEED_QUOTE_SETTINGS;
 }
 
 export async function setQuoteSettings(settings: QuoteSettings): Promise<void> {
+  // 1. Instant local & memory write
   writeLocalQuoteSettings(settings);
 
+  // 2. Persist to Firestore database
   try {
     const db = getAdminDb();
     if (db) {
@@ -97,6 +156,9 @@ export async function setQuoteSettings(settings: QuoteSettings): Promise<void> {
   } catch (e) {
     console.warn('Firestore setQuoteSettings warning:', e);
   }
+
+  // 3. Persist to Vercel Blob cloud storage (persists across all Vercel function instances)
+  await writeBlobSettings(BLOB_QUOTE_KEY, settings);
 }
 
 export async function isQuoteEnabled(): Promise<boolean> {
@@ -113,13 +175,10 @@ function readLocalCompanySettings(): CompanySettings | null {
     if (globalThis.__KONARK_COMPANY_SETTINGS__) {
       return globalThis.__KONARK_COMPANY_SETTINGS__;
     }
-    if (fs.existsSync(COMPANY_SETTINGS_FILE)) {
-      const content = fs.readFileSync(COMPANY_SETTINGS_FILE, 'utf8');
-      const data = JSON.parse(content);
-      if (data && typeof data.legalName === 'string') {
-        globalThis.__KONARK_COMPANY_SETTINGS__ = data;
-        return data;
-      }
+    const fromTmp = safeReadFile(TMP_COMPANY_FILE);
+    if (fromTmp && typeof fromTmp.legalName === 'string') {
+      globalThis.__KONARK_COMPANY_SETTINGS__ = fromTmp;
+      return fromTmp;
     }
   } catch {}
   return null;
@@ -128,8 +187,7 @@ function readLocalCompanySettings(): CompanySettings | null {
 function writeLocalCompanySettings(settings: CompanySettings) {
   try {
     globalThis.__KONARK_COMPANY_SETTINGS__ = settings;
-    ensureDir(COMPANY_SETTINGS_FILE);
-    fs.writeFileSync(COMPANY_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
+    safeWriteFile(TMP_COMPANY_FILE, settings);
   } catch {}
 }
 
@@ -150,6 +208,14 @@ export async function getCompanySettings(): Promise<CompanySettings> {
     console.warn('Error reading company settings from Firestore:', e);
   }
 
+  const fromBlob = await readBlobSettings<CompanySettings>(BLOB_COMPANY_KEY);
+  if (fromBlob && typeof fromBlob.legalName === 'string') {
+    const merged = { ...SEED_COMPANY_SETTINGS, ...fromBlob };
+    globalThis.__KONARK_COMPANY_SETTINGS__ = merged;
+    writeLocalCompanySettings(merged);
+    return merged;
+  }
+
   const local = readLocalCompanySettings();
   if (local) return { ...SEED_COMPANY_SETTINGS, ...local };
 
@@ -166,7 +232,7 @@ export async function setCompanySettings(
   // 1. Instant local persistence
   writeLocalCompanySettings(merged);
 
-  // 2. Firestore persistence (if available)
+  // 2. Firestore persistence
   try {
     const db = getAdminDb();
     if (db) {
@@ -185,6 +251,9 @@ export async function setCompanySettings(
     console.warn('Firestore setCompanySettings warning:', e);
   }
 
+  // 3. Vercel Blob cloud persistence
+  await writeBlobSettings(BLOB_COMPANY_KEY, merged);
+
   return merged;
 }
 
@@ -197,13 +266,10 @@ function readLocalTaxSettings(): TaxSettings | null {
     if (globalThis.__KONARK_TAX_SETTINGS__) {
       return globalThis.__KONARK_TAX_SETTINGS__;
     }
-    if (fs.existsSync(TAX_SETTINGS_FILE)) {
-      const content = fs.readFileSync(TAX_SETTINGS_FILE, 'utf8');
-      const data = JSON.parse(content);
-      if (data && typeof data.shopStateCode === 'number') {
-        globalThis.__KONARK_TAX_SETTINGS__ = data;
-        return data;
-      }
+    const fromTmp = safeReadFile(TMP_TAX_FILE);
+    if (fromTmp && typeof fromTmp.shopStateCode === 'number') {
+      globalThis.__KONARK_TAX_SETTINGS__ = fromTmp;
+      return fromTmp;
     }
   } catch {}
   return null;
@@ -212,8 +278,7 @@ function readLocalTaxSettings(): TaxSettings | null {
 function writeLocalTaxSettings(settings: TaxSettings) {
   try {
     globalThis.__KONARK_TAX_SETTINGS__ = settings;
-    ensureDir(TAX_SETTINGS_FILE);
-    fs.writeFileSync(TAX_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
+    safeWriteFile(TMP_TAX_FILE, settings);
   } catch {}
 }
 
@@ -234,6 +299,14 @@ export async function getTaxSettings(): Promise<TaxSettings> {
     console.warn('Error reading tax settings from Firestore:', e);
   }
 
+  const fromBlob = await readBlobSettings<TaxSettings>(BLOB_TAX_KEY);
+  if (fromBlob && typeof fromBlob.shopStateCode === 'number') {
+    const merged = { ...SEED_TAX_SETTINGS, ...fromBlob };
+    globalThis.__KONARK_TAX_SETTINGS__ = merged;
+    writeLocalTaxSettings(merged);
+    return merged;
+  }
+
   const local = readLocalTaxSettings();
   if (local) return { ...SEED_TAX_SETTINGS, ...local };
 
@@ -250,7 +323,7 @@ export async function setTaxSettings(
   // 1. Instant local persistence
   writeLocalTaxSettings(merged);
 
-  // 2. Firestore persistence (if available)
+  // 2. Firestore persistence
   try {
     const db = getAdminDb();
     if (db) {
@@ -268,6 +341,9 @@ export async function setTaxSettings(
   } catch (e) {
     console.warn('Firestore setTaxSettings warning:', e);
   }
+
+  // 3. Vercel Blob cloud persistence
+  await writeBlobSettings(BLOB_TAX_KEY, merged);
 
   return merged;
 }

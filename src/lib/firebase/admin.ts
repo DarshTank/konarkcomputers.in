@@ -44,8 +44,15 @@ export function getAdminDb(): Firestore | null {
   if (!_db) {
     const app = getAdminApp();
     if (!app) return null;
-    const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'default';
-    _db = getFirestore(app, dbId);
+    const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
+    // In Google Cloud Firestore, the default database is '(default)' (with parentheses).
+    // Passing 'default' causes a 5 NOT_FOUND error. If unset or 'default' or '(default)',
+    // call getFirestore(app) without databaseId so it connects to the standard default database.
+    if (dbId && dbId !== 'default' && dbId !== '(default)') {
+      _db = getFirestore(app, dbId);
+    } else {
+      _db = getFirestore(app);
+    }
     try {
       _db.settings({ ignoreUndefinedProperties: true });
     } catch {}

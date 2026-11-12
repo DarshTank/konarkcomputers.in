@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { TaxSettings, CompanySettings } from '@/lib/db/types';
 import { Settings, Save, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { getAdminIdToken } from '@/lib/firebase/client';
 import styles from '../admin.module.css';
 
 export default function AdminSettingsPage() {
@@ -55,15 +56,25 @@ export default function AdminSettingsPage() {
     setSavedSuccess(false);
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      try {
+        const idToken = await getAdminIdToken();
+        if (idToken) {
+          headers['Authorization'] = `Bearer ${idToken}`;
+        }
+      } catch {}
+
       const [resSettings, resQuote] = await Promise.all([
         fetch('/api/admin/settings', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
+          credentials: 'include',
           body: JSON.stringify({ tax, company }),
         }),
         fetch('/api/admin/settings/quote', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
+          credentials: 'include',
           body: JSON.stringify({ enabled: quoteEnabled }),
         }),
       ]);
@@ -81,7 +92,10 @@ export default function AdminSettingsPage() {
         } catch {}
         setTimeout(() => setSavedSuccess(false), 4000);
       } else {
-        alert('Failed to save settings');
+        const err1 = !resSettings.ok ? await resSettings.json().catch(() => ({})) : {};
+        const err2 = !resQuote.ok ? await resQuote.json().catch(() => ({})) : {};
+        const msg = err1.error || err2.error || 'Failed to save settings';
+        alert(msg);
       }
     } catch {
       alert('Network error saving settings');

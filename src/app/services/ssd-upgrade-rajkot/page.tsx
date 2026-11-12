@@ -3,6 +3,9 @@ import { LandingPageTemplate, type LandingPageContent } from "@/components/Landi
 import { BUSINESS } from "@/lib/business";
 import { YEARS_OF_EXPERIENCE } from "@/lib/constants";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   metadataBase: new URL(BUSINESS.siteUrl),
   title: "SSD Upgrade in Rajkot – Fast NVMe & SATA SSD Installation with Data Cloning",

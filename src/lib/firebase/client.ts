@@ -35,11 +35,74 @@ export function getClientAuth(): Auth {
 export function getClientFirestore(): Firestore {
   if (!_db) {
     const app = getClientApp();
-    const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'default';
-    _db = getFirestore(app, dbId);
+    const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
+    if (dbId && dbId !== 'default' && dbId !== '(default)') {
+      _db = getFirestore(app, dbId);
+    } else {
+      _db = getFirestore(app);
+    }
   }
   return _db;
 }
 
 export { getClientApp };
+
+/**
+ * Safely get an ID token from the client Firebase Auth instance,
+ * waiting for authentication state to resolve if it is initializing.
+ */
+export async function getAdminIdToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const auth = getClientAuth();
+    if (auth.currentUser) {
+      return await auth.currentUser.getIdToken();
+    }
+
+    // Wait for Firebase v9/v10 authStateReady if available
+    if (typeof (auth as any).authStateReady === 'function') {
+      try {
+        await (auth as any).authStateReady();
+        const readyUser = (auth as { currentUser: any }).currentUser;
+        if (readyUser) {
+          return await readyUser.getIdToken();
+        }
+      } catch {}
+    }
+
+    // Or wait up to 2.5s for onAuthStateChanged
+    return await new Promise<string | null>((resolve) => {
+      let resolved = false;
+      const timer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve(null);
+        }
+      }, 2500);
+
+      const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          try {
+            unsubscribe();
+          } catch {}
+          if (user) {
+            try {
+              const token = await user.getIdToken();
+              resolve(token);
+            } catch {
+              resolve(null);
+            }
+          } else {
+            resolve(null);
+          }
+        }
+      });
+    });
+  } catch {
+    return null;
+  }
+}
+
 

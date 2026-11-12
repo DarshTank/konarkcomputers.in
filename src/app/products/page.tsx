@@ -8,6 +8,9 @@ import { BUSINESS } from "@/lib/business";
 import { isQuoteEnabled } from "@/lib/db/settings";
 import styles from "./page.module.css";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   metadataBase: new URL(BUSINESS.siteUrl),
   title: "Laptop Battery, Charger, Screen & Computer Parts in Rajkot",

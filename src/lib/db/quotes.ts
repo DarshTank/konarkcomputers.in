@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { getAdminDb } from '../firebase/admin';
 import type { Quote, QuoteStatus, QuoteStatusEntry } from './types';
 
 // In-memory quote store across requests
 declare global {
-  // eslint-disable-next-line no-var
   var __KONARK_QUOTES__: Map<string, Quote> | undefined;
 }
 
@@ -13,7 +13,7 @@ if (!globalThis.__KONARK_QUOTES__) {
   globalThis.__KONARK_QUOTES__ = new Map<string, Quote>();
 }
 
-const QUOTES_DIR = path.join(process.cwd(), '.next', 'konark-quotes');
+const QUOTES_DIR = path.join(os.tmpdir(), 'konark-quotes');
 
 function ensureQuotesDir() {
   try {
