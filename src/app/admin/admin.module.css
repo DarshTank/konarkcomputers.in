@@ -12,7 +12,8 @@
 
 /* ── Admin Sidebar ── */
 .sidebar {
-  width: 260px;
+  width: min(260px, 30vw);
+  min-width: 220px;
   background: var(--color-dark);
   color: var(--color-text-on-dark);
   display: flex;
@@ -948,7 +949,8 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 280px;
+    width: min(280px, 88vw);
+    min-width: 0;
     height: 100vh;
     z-index: 1001;
     transform: translateX(-100%);
@@ -1104,6 +1106,20 @@
 
   .adminContent {
     padding: 12px 8px;
+  }
+
+  .topBar {
+    padding: 12px;
+  }
+
+  .statsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tableCard,
+  .formCard,
+  .modalCard {
+    max-width: 100%;
   }
 }
 

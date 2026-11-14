@@ -57,6 +57,8 @@ export const categorySchema = z.object({
   iconKey: z.string().default('Box'),
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,
+  defaultGstRateBps: z.number().int().min(0).max(10000).optional(),
+  defaultHsnCode: hsnSchema.optional(),
 });
 
 export const categoryInputSchema = categorySchema.omit({
@@ -135,6 +137,7 @@ export const productPricingSchema = z.object({
   priceIncludesGst: z.boolean().default(true),
   gstRateBps: z.number().int().min(0).max(10000).default(1800), // 1800 = 18%
   hsnCode: hsnSchema,
+  priceSet: z.boolean().optional(),
 });
 
 export const productStockSchema = z.object({
@@ -168,6 +171,21 @@ export const productSchema = z.object({
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,
   createdBy: z.string().default('system'),
+  brandName: z.string().optional(),
+  externalKey: z.string().optional(),
+  source: z.object({
+    provider: z.literal('pcpartpicker'),
+    rawName: z.string(),
+    priceUsd: z.number().nonnegative().optional(),
+    url: z.string().url().optional(),
+    scrapedAt: firestoreTimestampSchema,
+    lastSeenAt: firestoreTimestampSchema,
+    derivedFields: z.array(z.string()),
+  }).optional(),
+  isPublished: z.boolean().default(false),
+  platform: z.enum(['intel', 'ryzen']).optional(),
+  buildEligible: z.boolean().default(false),
+  buildEligibleOverride: z.boolean().optional(),
 });
 
 export const productInputSchema = productSchema.omit({
@@ -190,6 +208,7 @@ export const serviceItemSchema = z.object({
   isActive: z.boolean().default(true),
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,
+  autoAddToBuilds: z.boolean().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -280,6 +299,15 @@ export const quoteSubmissionSchema = z.object({
     .max(50),
   customer: quoteCustomerSchema,
   deviceContext: quoteDeviceContextSchema.optional(),
+  budgetPaise: z.number().int().nonnegative().optional(),
+  platform: z.enum(['intel', 'ryzen']).optional(),
+  profileId: z.string().max(100).optional(),
+  catalogVersion: z.string().max(100).optional(),
+  selectedSwaps: z.array(z.object({
+    originalProductId: z.string().min(1),
+    replacementProductId: z.string().min(1),
+    replacementName: z.string().min(1).max(200),
+  })).max(50).optional(),
   notes: z.string().max(2000).optional(),
   turnstileToken: z.string().optional(),
   honeypot: z.string().max(0, 'Bot detected').optional(), // honeypot must be empty

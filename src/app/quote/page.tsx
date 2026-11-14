@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getActiveCatalog } from '@/lib/db/catalog';
+import { getQuoteCatalogMetadata } from '@/lib/db/catalog';
 import { isQuoteEnabled } from '@/lib/db/settings';
 import { QuoteProvider } from '@/contexts/QuoteContext';
 import { QuoteBuilder } from './components/QuoteBuilder';
@@ -30,7 +30,7 @@ export default async function QuotePage() {
     notFound();
   }
 
-  const catalog = await getActiveCatalog();
+  const catalog = await getQuoteCatalogMetadata();
 
   return (
     <QuoteProvider
@@ -39,7 +39,7 @@ export default async function QuotePage() {
       initialRules={catalog.rules}
       initialTaxSettings={catalog.taxSettings}
     >
-      <QuoteBuilder products={catalog.products} />
+      <QuoteBuilder products={[]} />
     </QuoteProvider>
   );
 }

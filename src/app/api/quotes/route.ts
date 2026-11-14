@@ -27,28 +27,8 @@ import { generateQuotePdf } from '@/lib/pdf/quote-pdf';
 import { sendQuoteEmail } from '@/lib/mailer';
 import { isQuoteEnabled, getCompanySettings, getTaxSettings } from '@/lib/db/settings';
 import { saveQuote } from '@/lib/db/quotes';
-
-// Simple in-memory rate limiter per IP: max 10 quote requests per 10 minutes
-const ipRateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const limitWindow = 10 * 60 * 1000; // 10 minutes
-  const maxRequests = 10;
-
-  const record = ipRateLimitMap.get(ip);
-  if (!record || now > record.resetTime) {
-    ipRateLimitMap.set(ip, { count: 1, resetTime: now + limitWindow });
-    return true;
-  }
-
-  if (record.count >= maxRequests) {
-    return false;
-  }
-
-  record.count += 1;
-  return true;
-}
+import { checkSharedRateLimit, rateLimitKey, QUOTE_API_POLICY } from '@/lib/rate-limit';
+import { getCatalogSnapshot } from '@/lib/db/catalog';
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,12 +40,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
-
-    if (!checkRateLimit(ip)) {
+    const limited = await checkSharedRateLimit(rateLimitKey(request, 'quote'), QUOTE_API_POLICY);
+    if (!limited.allowed) {
       return NextResponse.json(
         { error: 'Too many quote requests. Please wait a few minutes before trying again.' },
-        { status: 429 }
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((limited.resetAt - Date.now()) / 1000)) } }
       );
     }
 
@@ -96,9 +75,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Load Tax & Company Settings (with local + Firestore persistence)
-    const [taxSettings, companySettings] = await Promise.all([
+    const [taxSettings, companySettings, catalogSnapshot] = await Promise.all([
       getTaxSettings(),
       getCompanySettings(),
+      getCatalogSnapshot().catch(() => ({ catalogVersion: 'unknown' })),
     ]);
 
     // Fetch products by IDs
@@ -262,6 +242,12 @@ export async function POST(request: NextRequest) {
     const nowSec = Math.floor(Date.now() / 1000);
     const validityDays = taxSettings.quoteValidityDays || 7;
     const validUntilSec = nowSec + validityDays * 24 * 60 * 60;
+    const overBudget = submission.budgetPaise !== undefined &&
+      calculated.grandTotalPaise > submission.budgetPaise;
+    const selectedSwaps = (submission.selectedSwaps || []).map((swap) => ({
+      ...swap,
+      selectedAt: { seconds: nowSec, nanoseconds: 0 },
+    }));
 
     const quoteDoc: Quote = {
       id: crypto.randomUUID(),
@@ -291,6 +277,17 @@ export async function POST(request: NextRequest) {
         grandTotalPaise: calculated.grandTotalPaise,
       },
       deviceContext: submission.deviceContext,
+      catalogVersion: catalogSnapshot.catalogVersion,
+      selectedSwaps,
+      buildContext: submission.budgetPaise !== undefined ? {
+        platform: submission.platform || 'intel',
+        budgetPaise: submission.budgetPaise,
+        profileId: submission.profileId,
+        baseBuildTotalPaise: calculated.grandTotalPaise,
+        overBudget,
+        catalogVersion: catalogSnapshot.catalogVersion,
+        selectedSwaps,
+      } : undefined,
       warnings,
       validUntil: { seconds: validUntilSec, nanoseconds: 0 },
       notes: submission.notes || undefined,
@@ -338,4 +335,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

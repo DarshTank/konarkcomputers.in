@@ -29,3 +29,10 @@
   opacity: 1;
   transform: translateY(0) translateX(0);
 }
+
+@media (max-width: 768px) {
+  .left:not(.visible),
+  .right:not(.visible) {
+    transform: translateY(24px);
+  }
+}

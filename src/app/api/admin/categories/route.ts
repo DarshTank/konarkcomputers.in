@@ -105,3 +105,58 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await verifyAdminRequest(request);
+    const id = request.nextUrl.searchParams.get('id');
+
+    if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
+    const db = getAdminDb();
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Category database is unavailable. Configure Firebase Admin credentials and restart the server.' },
+        { status: 503 }
+      );
+    }
+
+    const [products, attributes, sourceRules, targetRules] = await Promise.all([
+      db.collection('products').where('categoryId', '==', id).limit(1).get(),
+      db.collection('attributeDefinitions').where('categoryId', '==', id).limit(1).get(),
+      db.collection('compatibilityRules').where('sourceCategoryId', '==', id).limit(1).get(),
+      db.collection('compatibilityRules').where('targetCategoryId', '==', id).limit(1).get(),
+    ]);
+
+    if (!sourceRules.empty || !targetRules.empty) {
+      return NextResponse.json(
+        { error: 'This category is used by compatibility rules. Remove those rules first.' },
+        { status: 409 }
+      );
+    }
+    if (!products.empty || !attributes.empty) {
+      return NextResponse.json(
+        { error: 'This category is still used by products or attributes. Reassign them first.' },
+        { status: 409 }
+      );
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    await db.collection('categories').doc(id).delete();
+    await db.collection('adminAudit').add({
+      who: user?.email || 'admin',
+      action: 'delete',
+      collection: 'categories',
+      docId: id,
+      timestamp: { seconds: nowSec, nanoseconds: 0 },
+    });
+
+    try {
+      revalidateTag('catalog');
+    } catch {}
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

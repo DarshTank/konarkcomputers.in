@@ -11,15 +11,65 @@ import { QuoteSubmissionModal } from './QuoteSubmissionModal';
 import { Search, ArrowUpDown } from 'lucide-react';
 import styles from '../page.module.css';
 
-export function QuoteBuilder({ products }: { products: Product[] }) {
+export function QuoteBuilder({ products: initialProducts }: { products: Product[] }) {
   const { showIncompatible, getCompatibility } = useQuote();
 
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'name'>('price_asc');
   const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setProductsLoading(true);
+    setProductsError(null);
+    const query = new URLSearchParams({
+      page: String(page),
+      pageSize: '24',
+      category: selectedCategoryId,
+      stock: inStockOnly ? 'in_stock' : 'all',
+    });
+
+    fetch(`/api/quote/products?${query}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.error || 'Unable to load products');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setProducts(data.products || []);
+        setTotalProducts(data.pagination?.total || 0);
+        setTotalPages(data.pagination?.totalPages || 1);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setProducts([]);
+          setProductsError(error instanceof Error ? error.message : 'Unable to load products');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setProductsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, selectedCategoryId, inStockOnly]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategoryId, inStockOnly]);
 
   // Live real-time response if quote page is disabled while active
   useEffect(() => {
@@ -204,13 +254,27 @@ export function QuoteBuilder({ products }: { products: Product[] }) {
                 </div>
 
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                  {displayedProducts.length} items
+                  {totalProducts} items
                 </span>
               </div>
             </div>
 
             {/* Products Grid */}
-            {displayedProducts.length > 0 ? (
+            {productsLoading ? (
+              <div className={styles.emptyState}>Loading products...</div>
+            ) : productsError ? (
+              <div className={styles.emptyState}>
+                <p>{productsError}</p>
+                <button
+                  type="button"
+                  className="btn btn--outline"
+                  onClick={() => window.location.reload()}
+                  style={{ marginTop: '16px', color: 'var(--color-dark)', borderColor: 'var(--color-border)' }}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : displayedProducts.length > 0 ? (
               <div className={styles.productGrid}>
                 {displayedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
@@ -240,6 +304,28 @@ export function QuoteBuilder({ products }: { products: Product[] }) {
                   style={{ marginTop: '16px', color: 'var(--color-dark)', borderColor: 'var(--color-border)' }}
                 >
                   Reset All Filters
+                </button>
+              </div>
+            )}
+
+            {!productsLoading && totalPages > 1 && (
+              <div className={styles.pagination}>
+                <button
+                  type="button"
+                  className="btn btn--outline"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </button>
+                <span>Page {page} of {totalPages}</span>
+                <button
+                  type="button"
+                  className="btn btn--outline"
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  disabled={page === totalPages}
+                >
+                  Next
                 </button>
               </div>
             )}

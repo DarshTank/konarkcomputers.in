@@ -15,6 +15,10 @@
     grid-template-columns: 1fr;
     gap: var(--space-8);
   }
+
+  .sidebar {
+    position: static;
+  }
 }
 
 .mainContent {

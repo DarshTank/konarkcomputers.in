@@ -1,8 +1,13 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
+const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+if (!apiKey) {
+  throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY is required to run the database diagnostic.');
+}
+
 const firebaseConfig = {
-  apiKey: "AIzaSyB60JoaJbK_28QpkfrDUzDtWZfLVejsCnA",
+  apiKey,
   authDomain: "konarkcomputers-in.firebaseapp.com",
   projectId: "konarkcomputers-in",
   storageBucket: "konarkcomputers-in.firebasestorage.app",

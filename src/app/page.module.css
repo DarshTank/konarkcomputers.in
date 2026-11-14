@@ -105,6 +105,21 @@
   }
 }
 
+@media (max-width: 360px) {
+  .heroTitle {
+    font-size: clamp(1.5rem, 8vw, 1.75rem);
+    line-height: 1.12;
+  }
+
+  .heroBadge {
+    letter-spacing: 0.1em;
+  }
+
+  .heroCtas {
+    gap: var(--space-3);
+  }
+}
+
 
 
 /* ── Highlights ── */

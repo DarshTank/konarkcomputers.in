@@ -2100,8 +2100,8 @@ export const SEED_COMPATIBILITY_RULES: CompatibilityRule[] = [
     "targetCategoryId": "motherboard",
     "constraints": [
       {
-        "sourceField": "socket",
-        "targetField": "socket",
+        "sourceField": "specs.socket",
+        "targetField": "specs.socket",
         "operator": "eq"
       }
     ],
@@ -2115,8 +2115,8 @@ export const SEED_COMPATIBILITY_RULES: CompatibilityRule[] = [
     "targetCategoryId": "ram-desktop",
     "constraints": [
       {
-        "sourceField": "memoryType",
-        "targetField": "memoryType",
+        "sourceField": "specs.memoryType",
+        "targetField": "specs.ramGen",
         "operator": "eq"
       }
     ],
@@ -2130,8 +2130,8 @@ export const SEED_COMPATIBILITY_RULES: CompatibilityRule[] = [
     "targetCategoryId": "ram-desktop",
     "constraints": [
       {
-        "sourceField": "memorySupport",
-        "targetField": "memoryType",
+        "sourceField": "specs.memoryTypes",
+        "targetField": "specs.ramGen",
         "operator": "in"
       }
     ],
@@ -2145,8 +2145,8 @@ export const SEED_COMPATIBILITY_RULES: CompatibilityRule[] = [
     "targetCategoryId": "cpu-cooler",
     "constraints": [
       {
-        "sourceField": "socket",
-        "targetField": "coolerSupportedSockets",
+        "sourceField": "specs.socket",
+        "targetField": "specs.supportedSockets",
         "operator": "in"
       }
     ],
@@ -2160,8 +2160,8 @@ export const SEED_COMPATIBILITY_RULES: CompatibilityRule[] = [
     "targetCategoryId": "power-supply",
     "constraints": [
       {
-        "sourceField": "recommendedPsuW",
-        "targetField": "wattage",
+        "sourceField": "specs.recommendedPsuW",
+        "targetField": "specs.wattage",
         "operator": "lte"
       }
     ],
@@ -2175,8 +2175,8 @@ export const SEED_COMPATIBILITY_RULES: CompatibilityRule[] = [
     "targetCategoryId": "cabinet",
     "constraints": [
       {
-        "sourceField": "boardFormFactor",
-        "targetField": "caseSupportedFormFactors",
+        "sourceField": "specs.formFactor",
+        "targetField": "specs.supportedFormFactors",
         "operator": "in"
       }
     ],

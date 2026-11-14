@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateProductCompatibility, validateCartConflicts } from '../engine';
+import { getFieldValue } from '../rules';
 import {
   SEED_CATEGORIES,
   SEED_ATTRIBUTES,
@@ -9,6 +10,46 @@ import {
 import type { ProductForCompat } from '../types';
 
 describe('Smart Compatibility Engine (Section 3.2)', () => {
+  it('resolves bare and prefixed compatibility fields', () => {
+    const product: ProductForCompat = {
+      id: 'p',
+      name: 'Test',
+      categoryId: 'processor',
+      brandId: 'brand',
+      brandName: 'Brand',
+      specs: { socket: 'AM5' },
+      compat: { memoryType: 'DDR5' },
+      condition: 'new',
+    };
+
+    expect(getFieldValue(product, 'socket')).toBe('AM5');
+    expect(getFieldValue(product, 'specs.socket')).toBe('AM5');
+    expect(getFieldValue(product, 'compat.memoryType')).toBe('DDR5');
+  });
+
+  it('treats missing rule data as a blocking conflict in strict mode', () => {
+    const source = getProduct('kc-ramd-005');
+    const target = { ...getProduct('kc-ramd-016'), specs: {} };
+    const result = evaluateProductCompatibility({
+      cart: [{ product: source, qty: 1 }],
+      candidate: target,
+      categories: SEED_CATEGORIES,
+      attributes: SEED_ATTRIBUTES,
+      rules: [{
+        id: 'strict-missing',
+        sourceCategoryId: source.categoryId,
+        targetCategoryId: target.categoryId,
+        constraints: [{ sourceField: 'specs.ramGen', targetField: 'specs.ramGen', operator: 'eq' }],
+        severity: 'block',
+        message: 'RAM generation must match',
+        isActive: true,
+      }],
+      strict: true,
+    });
+
+    expect(result.reasons.some((reason) => reason.severity === 'block')).toBe(true);
+  });
+
   // Helper to convert seed products to ProductForCompat
   function getProduct(id: string): ProductForCompat {
     const prod = SEED_PRODUCTS.find((p) => p.id === id);

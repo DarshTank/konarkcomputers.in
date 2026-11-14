@@ -11,6 +11,7 @@ const quickLinks = [
   { href: "/services/computer-repair-rajkot", label: "Computer Repair Rajkot" },
   { href: "/products", label: "Parts Catalog" },
   { href: "/contact", label: "Contact & Location" },
+  { href: "/sitemap", label: "Sitemap" },
 ];
 
 const productLinks = [
@@ -25,6 +26,8 @@ const productLinks = [
 ];
 
 export function Footer() {
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(BUSINESS.address.full)}`;
+
   return (
     <footer className={styles.footer}>
       {/* Accent border */}
@@ -83,7 +86,14 @@ export function Footer() {
           <ul className={styles.contactList}>
             <li>
               <MapPin size={16} className={styles.contactIcon} />
-              <span>{BUSINESS.address.full}</span>
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`View ${BUSINESS.address.full} on Google Maps`}
+              >
+                {BUSINESS.address.full}
+              </a>
             </li>
             <li>
               <Phone size={16} className={styles.contactIcon} />

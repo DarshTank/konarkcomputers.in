@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import type { Product, Category, AttributeDefinition, CompatibilityRule, TaxSettings } from '@/lib/db/types';
+import type { Product, Category, AttributeDefinition, CompatibilityRule, TaxSettings, QuoteSwapSnapshot } from '@/lib/db/types';
 import type { DeviceContext, CompatResult } from '@/lib/compat/types';
 import { evaluateProductCompatibility, validateCartConflicts } from '@/lib/compat/engine';
 import { calculateTotals, type LineItem } from '@/lib/pricing/calculator';
@@ -30,6 +30,12 @@ interface QuoteContextValue {
   attributes: AttributeDefinition[];
   rules: CompatibilityRule[];
   taxSettings: TaxSettings;
+  budgetPaise?: number;
+  setBudgetPaise: (budget: number | undefined) => void;
+  overBudget: boolean;
+  swapProduct: (productId: string, replacement: Product) => boolean;
+  refreshProducts: (products: Product[]) => void;
+  selectedSwaps: QuoteSwapSnapshot[];
 }
 
 const QuoteContext = createContext<QuoteContextValue | null>(null);
@@ -51,6 +57,8 @@ export function QuoteProvider({
   const [deviceContext, setDeviceContext] = useState<DeviceContext>({});
   const [showIncompatible, setShowIncompatible] = useState<boolean>(false);
   const [customerStateCode, setCustomerStateCode] = useState<number>(initialTaxSettings.shopStateCode || 24);
+  const [budgetPaise, setBudgetPaise] = useState<number | undefined>(undefined);
+  const [selectedSwaps, setSelectedSwaps] = useState<QuoteSwapSnapshot[]>([]);
 
   // Load cart from sessionStorage on client mount
   useEffect(() => {
@@ -59,6 +67,10 @@ export function QuoteProvider({
       const savedContext = sessionStorage.getItem('konark_device_context');
       if (savedCart) setCart(JSON.parse(savedCart));
       if (savedContext) setDeviceContext(JSON.parse(savedContext));
+      const savedBudget = sessionStorage.getItem('konark_quote_budget');
+      if (savedBudget) setBudgetPaise(Number(savedBudget));
+      const savedSwaps = sessionStorage.getItem('konark_quote_swaps');
+      if (savedSwaps) setSelectedSwaps(JSON.parse(savedSwaps));
     } catch {}
   }, []);
 
@@ -67,8 +79,37 @@ export function QuoteProvider({
     try {
       sessionStorage.setItem('konark_quote_cart', JSON.stringify(cart));
       sessionStorage.setItem('konark_device_context', JSON.stringify(deviceContext));
+      if (budgetPaise === undefined) sessionStorage.removeItem('konark_quote_budget');
+      else sessionStorage.setItem('konark_quote_budget', String(budgetPaise));
+      sessionStorage.setItem('konark_quote_swaps', JSON.stringify(selectedSwaps));
     } catch {}
-  }, [cart, deviceContext]);
+  }, [cart, deviceContext, budgetPaise, selectedSwaps]);
+
+  const swapProduct = (productId: string, replacement: Product): boolean => {
+    const result = getCompatibility(replacement);
+    if (result.status === 'incompatible') return false;
+    setCart((prev) => prev.map((item) =>
+      item.product.id === productId ? { ...item, product: replacement } : item
+    ));
+    setSelectedSwaps((prev) => [
+      ...prev.filter((swap) => swap.originalProductId !== productId),
+      {
+        originalProductId: productId,
+        replacementProductId: replacement.id,
+        replacementName: replacement.name,
+        selectedAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
+      },
+    ]);
+    return true;
+  };
+
+  const refreshProducts = (products: Product[]) => {
+    const byId = new Map(products.map((product) => [product.id, product]));
+    setCart((prev) => prev.map((item) => {
+      const current = byId.get(item.product.id);
+      return current ? { ...item, product: current } : item;
+    }));
+  };
 
   const addToQuote = (product: Product, qty = 1) => {
     setCart((prev) => {
@@ -108,7 +149,7 @@ export function QuoteProvider({
         name: i.product.name,
         categoryId: i.product.categoryId,
         brandId: i.product.brandId,
-        brandName: i.product.brandId,
+        brandName: i.product.brandName || i.product.brandId,
         specs: i.product.specs,
         compat: i.product.compat,
         condition: i.product.condition,
@@ -123,7 +164,7 @@ export function QuoteProvider({
       name: candidate.name,
       categoryId: candidate.categoryId,
       brandId: candidate.brandId,
-      brandName: candidate.brandId,
+      brandName: candidate.brandName || candidate.brandId,
       specs: candidate.specs,
       compat: candidate.compat,
       condition: candidate.condition,
@@ -161,6 +202,7 @@ export function QuoteProvider({
       roundOff: initialTaxSettings.roundOff,
     });
   }, [cart, customerStateCode, initialTaxSettings]);
+  const overBudget = budgetPaise !== undefined && totals.grandTotalPaise > budgetPaise;
 
   return (
     <QuoteContext.Provider
@@ -183,6 +225,12 @@ export function QuoteProvider({
         attributes: initialAttributes,
         rules: initialRules,
         taxSettings: initialTaxSettings,
+        budgetPaise,
+        setBudgetPaise,
+        overBudget,
+        swapProduct,
+        refreshProducts,
+        selectedSwaps,
       }}
     >
       {children}
@@ -197,4 +245,3 @@ export function useQuote() {
   }
   return ctx;
 }
-

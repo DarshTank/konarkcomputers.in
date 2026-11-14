@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "pcdata:validate": "tsx scripts/pc-data/validate.ts",
+    "pcdata:wipe": "tsx scripts/pc-data/wipe.ts",
+    "pcdata:seed": "tsx scripts/pc-data/seed.ts",
+    "pcdata:reseed": "tsx scripts/pc-data/seed.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",
@@ -27,6 +31,7 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.1.7",
+    "tsx": "^4.23.15",
     "typescript": "^5.0.0",
     "vitest": "^4.1.12"
   }

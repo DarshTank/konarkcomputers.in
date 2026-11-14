@@ -5,7 +5,8 @@ import type { CompatRuleForEngine, ProductForCompat } from './types';
 
 /**
  * Get a field value from a product's specs or compat object.
- * Field paths: "specs.memoryType", "compat.deviceType", "compat.compatibleBrands"
+ * Field paths: "specs.memoryType", "compat.deviceType", "compat.compatibleBrands".
+ * Bare keys are accepted for compatibility with older seeded rules.
  */
 export function getFieldValue(
   product: ProductForCompat,
@@ -20,6 +21,9 @@ export function getFieldValue(
   }
   if (root === 'compat' && key) {
     return product.compat[key];
+  }
+  if (parts.length === 1) {
+    return product.specs[fieldPath] ?? product.compat[fieldPath];
   }
   // Direct field access
   if (fieldPath in product) {
@@ -140,4 +144,3 @@ export function evaluateRule(
     dataGaps: hasDataGap,
   };
 }
-

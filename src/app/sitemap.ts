@@ -1,9 +1,14 @@
 import type { MetadataRoute } from "next";
+import { isQuoteEnabled } from "@/lib/db/settings";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.konarkcomputers.in";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const quoteEnabled = await isQuoteEnabled();
   const currentDate = new Date();
 
   const routes: Array<{
@@ -15,7 +20,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/about", priority: 0.8, changeFrequency: "monthly" },
     { path: "/services", priority: 0.8, changeFrequency: "monthly" },
     { path: "/products", priority: 0.8, changeFrequency: "monthly" },
+    ...(quoteEnabled ? [{ path: "/quote", priority: 0.8, changeFrequency: "monthly" as const }] : []),
     { path: "/contact", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/sitemap", priority: 0.7, changeFrequency: "monthly" },
     // Dedicated Search Intent Landing Pages
     { path: "/services/laptop-repair-rajkot", priority: 0.8, changeFrequency: "monthly" },
     { path: "/services/computer-repair-rajkot", priority: 0.8, changeFrequency: "monthly" },

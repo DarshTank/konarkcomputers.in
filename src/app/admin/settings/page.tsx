@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import type { TaxSettings, CompanySettings } from '@/lib/db/types';
+import type { TaxSettings, CompanySettings, BuildConfig } from '@/lib/db/types';
 import { Settings, Save, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { getAdminIdToken } from '@/lib/firebase/client';
 import styles from '../admin.module.css';
@@ -32,6 +32,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [quoteEnabled, setQuoteEnabled] = useState(true);
+  const [buildConfig, setBuildConfig] = useState<BuildConfig | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -48,6 +49,10 @@ export default function AdminSettingsPage() {
         if (typeof data.enabled === 'boolean') setQuoteEnabled(data.enabled);
       })
       .catch(() => {});
+    fetch('/api/admin/builds/config')
+      .then((res) => res.json())
+      .then((data) => { if (data.config) setBuildConfig(data.config); })
+      .catch(() => {});
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -60,7 +65,7 @@ export default function AdminSettingsPage() {
       try {
         const idToken = await getAdminIdToken();
         if (idToken) {
-          headers['Authorization'] = `Bearer ${idToken}`;
+          headers['Authorization'] = 'Bearer ' + idToken;
         }
       } catch {}
 
@@ -77,6 +82,12 @@ export default function AdminSettingsPage() {
           credentials: 'include',
           body: JSON.stringify({ enabled: quoteEnabled }),
         }),
+        buildConfig ? fetch('/api/admin/builds/config', {
+          method: 'PUT',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ config: buildConfig }),
+        }) : Promise.resolve(new Response(null, { status: 200 })),
       ]);
 
       if (resSettings.ok && resQuote.ok) {
@@ -325,6 +336,24 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
+          {buildConfig && (
+            <div className={styles.settingsCard}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '16px' }}>Build Generator Settings</h2>
+              <p style={{ color: '#64748b', fontSize: 'var(--text-xs)' }}>Control budget tolerance and the number of generated build alternatives.</p>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <label>Budget tolerance (%)
+                  <input type="number" min="0" max="100" value={buildConfig.tolerancePct} onChange={(e) => setBuildConfig({ ...buildConfig, tolerancePct: Number(e.target.value) })} />
+                </label>
+                <label>Stretch (%)
+                  <input type="number" min="0" max="100" value={buildConfig.stretchPct} onChange={(e) => setBuildConfig({ ...buildConfig, stretchPct: Number(e.target.value) })} />
+                </label>
+                <label>Max builds shown
+                  <input type="number" min="1" max="20" value={buildConfig.maxBuildsShown} onChange={(e) => setBuildConfig({ ...buildConfig, maxBuildsShown: Number(e.target.value) })} />
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Public Quotation System Visibility */}
           <div className={styles.settingsCard}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
@@ -402,4 +431,3 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
-

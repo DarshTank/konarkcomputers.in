@@ -13,9 +13,12 @@ import {
 // Global memory cache shared across route executions in the same Node process
 declare global {
   var __KONARK_QUOTE_SETTINGS__: QuoteSettings | undefined;
+  var __KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__: number | undefined;
   var __KONARK_COMPANY_SETTINGS__: CompanySettings | undefined;
   var __KONARK_TAX_SETTINGS__: TaxSettings | undefined;
 }
+
+const FIRESTORE_QUOTA_RETRY_DELAY_MS = 30_000;
 
 // Local cache files (using os.tmpdir() which is safe in both serverless and local dev)
 const TMP_QUOTE_FILE = path.join(os.tmpdir(), 'konark-quote-settings.json');
@@ -25,6 +28,15 @@ const TMP_TAX_FILE = path.join(os.tmpdir(), 'konark-tax-settings.json');
 const BLOB_QUOTE_KEY = 'konark-settings/quote.json';
 const BLOB_COMPANY_KEY = 'konark-settings/company.json';
 const BLOB_TAX_KEY = 'konark-settings/tax.json';
+
+function formatSettingsError(error: unknown): string {
+  if (!error || typeof error !== 'object') return String(error);
+  const value = error as { code?: unknown; details?: unknown; message?: unknown };
+  const code = value.code !== undefined ? `code=${String(value.code)}` : '';
+  const details = value.details ? String(value.details) : '';
+  const message = value.message ? String(value.message) : '';
+  return [code, details || message].filter(Boolean).join(' ') || 'unknown error';
+}
 
 function safeWriteFile(filePath: string, data: any) {
   try {
@@ -107,24 +119,36 @@ function writeLocalQuoteSettings(settings: QuoteSettings) {
 
 export async function getQuoteSettings(): Promise<QuoteSettings> {
   // 1. Check Firestore database
-  try {
-    const db = getAdminDb();
-    if (db) {
-      const snap = await db.collection('settings').doc('quote').get();
-      if (snap.exists) {
-        const data = snap.data();
-        const settings: QuoteSettings = {
-          enabled: data?.enabled !== false,
-          updatedAt: data?.updatedAt,
-          updatedBy: data?.updatedBy,
-        };
-        globalThis.__KONARK_QUOTE_SETTINGS__ = settings;
-        writeLocalQuoteSettings(settings);
-        return settings;
+  const retryAfter = globalThis.__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__ ?? 0;
+  if (Date.now() >= retryAfter) {
+    try {
+      const db = getAdminDb();
+      if (db) {
+        const snap = await db.collection('settings').doc('quote').get();
+        if (snap.exists) {
+          const data = snap.data();
+          const settings: QuoteSettings = {
+            enabled: data?.enabled !== false,
+            updatedAt: data?.updatedAt,
+            updatedBy: data?.updatedBy,
+          };
+          globalThis.__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__ = undefined;
+          globalThis.__KONARK_QUOTE_SETTINGS__ = settings;
+          writeLocalQuoteSettings(settings);
+          return settings;
+        }
+      }
+    } catch (e: any) {
+      if (e?.code === 8 || e?.details === 'Quota exceeded.') {
+        globalThis.__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__ =
+          Date.now() + FIRESTORE_QUOTA_RETRY_DELAY_MS;
+        console.warn(
+          `Firestore quote settings quota exceeded; using cached settings for ${FIRESTORE_QUOTA_RETRY_DELAY_MS / 1000}s.`
+        );
+      } else {
+        console.warn(`Error reading quote settings from Firestore: ${formatSettingsError(e)}`);
       }
     }
-  } catch (e) {
-    console.warn('Error reading quote settings from Firestore:', e);
   }
 
   // 2. Check Vercel Blob cloud persistence (works across all serverless lambdas)
@@ -205,7 +229,7 @@ export async function getCompanySettings(): Promise<CompanySettings> {
       }
     }
   } catch (e) {
-    console.warn('Error reading company settings from Firestore:', e);
+    console.warn(`Error reading company settings from Firestore: ${formatSettingsError(e)}`);
   }
 
   const fromBlob = await readBlobSettings<CompanySettings>(BLOB_COMPANY_KEY);
@@ -296,7 +320,7 @@ export async function getTaxSettings(): Promise<TaxSettings> {
       }
     }
   } catch (e) {
-    console.warn('Error reading tax settings from Firestore:', e);
+    console.warn(`Error reading tax settings from Firestore: ${formatSettingsError(e)}`);
   }
 
   const fromBlob = await readBlobSettings<TaxSettings>(BLOB_TAX_KEY);

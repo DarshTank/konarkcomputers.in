@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/Footer/Footer";
 import { LocalBusinessJsonLd } from "@/components/Seo/LocalBusinessJsonLd";
+import { FloatingCallButton } from "@/components/FloatingCallButton/FloatingCallButton";
 import { YEARS_OF_EXPERIENCE } from "@/lib/constants";
 
 const dmSerifDisplay = DM_Serif_Display({
@@ -90,6 +91,7 @@ export default function RootLayout({
         <Navbar />
         <main>{children}</main>
         <Footer />
+        <FloatingCallButton />
       </body>
     </html>
   );

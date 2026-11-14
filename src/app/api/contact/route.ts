@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { sendContactEmail } from "@/lib/mailer";
+import { checkSharedRateLimit, rateLimitKey, PUBLIC_API_POLICY } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const limited = await checkSharedRateLimit(rateLimitKey(request, 'contact'), PUBLIC_API_POLICY);
+    if (!limited.allowed) return NextResponse.json({ success: false, error: 'Too many requests. Please try again later.' }, { status: 429, headers: { 'Retry-After': String(Math.ceil((limited.resetAt - Date.now()) / 1000)) } });
     const body = await request.json();
     const { name, email, subject, message } = body;
 

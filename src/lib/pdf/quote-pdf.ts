@@ -238,6 +238,24 @@ export async function generateQuotePdf(quote: Quote): Promise<Uint8Array> {
     color: black,
   });
 
+  const contextParts = [
+    quote.catalogVersion ? `Catalog ${quote.catalogVersion}` : '',
+    quote.buildContext?.budgetPaise !== undefined
+      ? `Budget: ₹${(quote.buildContext.budgetPaise / 100).toLocaleString('en-IN')}`
+      : '',
+    quote.selectedSwaps?.length ? `Swaps: ${quote.selectedSwaps.length}` : '',
+    quote.buildContext?.overBudget ? 'OVER BUDGET' : '',
+  ].filter(Boolean).join('  •  ');
+  if (contextParts) {
+    page.drawText(contextParts, {
+      x: leftMargin,
+      y: custRowY - 14,
+      size: 7.5,
+      font: fontRegular,
+      color: quote.buildContext?.overBudget ? rgb(0.75, 0.1, 0.1) : textGray,
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // 3. TABLE DIMENSIONS & COORDINATES
   // ═══════════════════════════════════════════════════════════════════════════

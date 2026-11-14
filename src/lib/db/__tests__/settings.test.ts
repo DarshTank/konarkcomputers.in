@@ -71,6 +71,24 @@ describe('Quotation System Visibility Settings', () => {
     const isEnabled = await isQuoteEnabled();
     expect(isEnabled).toBe(true);
   });
+
+  it('backs off after Firestore quota exhaustion', async () => {
+    const get = vi.fn().mockRejectedValue({ code: 8, details: 'Quota exceeded.' });
+    const mockDb = {
+      collection: vi.fn().mockReturnValue({
+        doc: vi.fn().mockReturnValue({ get }),
+      }),
+    };
+
+    vi.spyOn(adminFirebase, 'getAdminDb').mockReturnValue(mockDb as any);
+    delete (globalThis as any).__KONARK_QUOTE_SETTINGS__;
+    delete (globalThis as any).__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__;
+
+    await getQuoteSettings();
+    await getQuoteSettings();
+
+    expect(get).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('Company and Tax Settings Persistence', () => {

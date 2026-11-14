@@ -32,7 +32,7 @@ export interface ProductForCompat {
   name: string;
   categoryId: string;
   brandId: string;
-  brandName: string;
+  brandName?: string;
   specs: Record<string, string | number | boolean | string[]>;
   compat: {
     deviceType?: 'desktop' | 'laptop' | 'both';
@@ -76,4 +76,3 @@ export interface CompatEngineData {
   attributes: AttributeForCompat[];
   rules: CompatRuleForEngine[];
 }
-

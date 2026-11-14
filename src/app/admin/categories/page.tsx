@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Category } from '@/lib/db/types';
-import { Plus, Edit2, Check, X, Layers, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import styles from '../admin.module.css';
 import Pagination from '../components/Pagination';
 
@@ -64,6 +64,21 @@ export default function AdminCategoriesPage() {
       await loadCategories();
     } else {
       alert('Failed to save category');
+    }
+  };
+
+  const handleDelete = async (category: Category) => {
+    if (!confirm(`Delete the "${category.name}" category? This cannot be undone.`)) return;
+
+    const res = await fetch(`/api/admin/categories?id=${encodeURIComponent(category.id)}`, {
+      method: 'DELETE',
+    });
+
+    if (res.ok) {
+      await loadCategories();
+    } else {
+      const data = await res.json().catch(() => null);
+      alert(data?.error || 'Failed to delete category');
     }
   };
 
@@ -169,6 +184,16 @@ export default function AdminCategoriesPage() {
                         >
                           <Edit2 size={14} />
                           Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c)}
+                          className={styles.actionBtn}
+                          style={{ color: '#ef4444', marginLeft: '8px' }}
+                          title="Delete category"
+                        >
+                          <Trash2 size={14} />
+                          Delete
                         </button>
                       </td>
                     </tr>

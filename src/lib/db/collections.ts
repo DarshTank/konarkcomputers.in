@@ -12,6 +12,7 @@ export const COLLECTIONS = {
   adminAudit: 'adminAudit',
   settings: 'settings',
   users: 'users',
+  buildProfiles: 'buildProfiles',
 } as const;
 
 export type CollectionName = keyof typeof COLLECTIONS;

@@ -3,8 +3,7 @@
  * Run with: npx tsx scripts/seed.ts
  */
 
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getAdminDb } from '../src/lib/firebase/admin';
 import {
   SEED_CATEGORIES,
   SEED_BRANDS,
@@ -14,37 +13,13 @@ import {
   SEED_SERVICES,
   SEED_TAX_SETTINGS,
   SEED_COMPANY_SETTINGS,
+  SEED_QUOTE_SETTINGS,
 } from '../src/lib/db/seed-data';
 
-function initDb() {
-  if (getApps().length === 0) {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-    if (!projectId || !clientEmail || !privateKey) {
-      console.warn('⚠️ Firebase credentials not configured in env! Running seed dry-run.');
-      return null;
-    }
-
-    initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-    });
-  }
-  return getFirestore(getApps()[0], process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'default');
-}
-
 export async function runSeed() {
-  const db = initDb();
+  const db = getAdminDb();
   if (!db) {
-    console.log('Seed summary (dry-run mode):');
-    console.log(`- Categories: ${SEED_CATEGORIES.length}`);
-    console.log(`- Brands: ${SEED_BRANDS.length}`);
-    console.log(`- Attribute Definitions: ${SEED_ATTRIBUTES.length}`);
-    console.log(`- Products: ${SEED_PRODUCTS.length}`);
-    console.log(`- Rules: ${SEED_COMPATIBILITY_RULES.length}`);
-    console.log(`- Services: ${SEED_SERVICES.length}`);
-    return;
+    throw new Error('Firebase Admin credentials are unavailable');
   }
 
   console.log('Seeding Firestore collections in chunked batches...');
@@ -52,6 +27,7 @@ export async function runSeed() {
 
   allOps.push({ ref: db.collection('settings').doc('tax'), data: SEED_TAX_SETTINGS });
   allOps.push({ ref: db.collection('settings').doc('company'), data: SEED_COMPANY_SETTINGS });
+  allOps.push({ ref: db.collection('settings').doc('quote'), data: SEED_QUOTE_SETTINGS });
   allOps.push({
     ref: db.collection('counters').doc('quotes'),
     data: { currentYear: new Date().getFullYear(), lastNumber: 0 },

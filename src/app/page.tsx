@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Phone,
+  MapPin,
   Monitor,
   MessageSquare,
   Wrench,
@@ -205,14 +206,24 @@ export default function HomePage() {
           </AnimatedSection>
           <AnimatedSection delay={500}>
             <div className={styles.heroCtas}>
-              <a href="tel:+919426429416" className="btn btn--primary">
-                <Phone size={18} />
-                Call Now
-              </a>
               <Link href="/services" className="btn btn--outline">
                 Our Services
                 <ArrowRight size={16} />
               </Link>
+              <a href="tel:+919426429416" className="btn btn--primary">
+                <Phone size={18} />
+                Call Now
+              </a>
+              <a
+                href={BUSINESS.googleMapsPlaceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn--accent"
+                aria-label="View our location on Google Maps"
+              >
+                <MapPin size={16} />
+                Location
+              </a>
             </div>
           </AnimatedSection>
         </div>

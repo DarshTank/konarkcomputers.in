@@ -1,0 +1,60 @@
+.button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--color-teal);
+  border-radius: 50%;
+  background: var(--color-teal);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.button::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid rgba(54, 166, 173, 0.45);
+  border-radius: inherit;
+  animation: pulse 2.2s ease-out infinite;
+}
+
+.button:hover {
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.34);
+}
+
+@keyframes pulse {
+  0%,
+  45% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+@media (max-width: 640px) {
+  .button {
+    right: 16px;
+    bottom: 16px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button::before {
+    animation: none;
+  }
+}

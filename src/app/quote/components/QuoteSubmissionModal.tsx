@@ -16,7 +16,7 @@ export function QuoteSubmissionModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { cart, deviceContext, totals, customerStateCode, setCustomerStateCode } = useQuote();
+  const { cart, deviceContext, totals, customerStateCode, setCustomerStateCode, budgetPaise, selectedSwaps } = useQuote();
 
   const [name, setName] = useState('');
   const [phoneRaw, setPhoneRaw] = useState('');
@@ -74,6 +74,12 @@ export function QuoteSubmissionModal({
           gstin: gstin.trim() ? gstin.trim().toUpperCase() : undefined,
         },
         deviceContext,
+        budgetPaise,
+        selectedSwaps: selectedSwaps.map((swap) => ({
+          originalProductId: swap.originalProductId,
+          replacementProductId: swap.replacementProductId,
+          replacementName: swap.replacementName,
+        })),
         notes: notes.trim() || undefined,
         honeypot,
       };
@@ -280,4 +286,3 @@ export function QuoteSubmissionModal({
     </div>
   );
 }
-

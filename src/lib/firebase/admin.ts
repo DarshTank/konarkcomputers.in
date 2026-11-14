@@ -2,15 +2,15 @@
 // This module initializes firebase-admin with a service account from environment variables.
 // NEVER import this file in client components.
 
-import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, applicationDefault, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 
 export function isFirebaseAdminConfigured(): boolean {
   return !!(
     process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_CLIENT_EMAIL &&
-    process.env.FIREBASE_PRIVATE_KEY
+    ((process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) ||
+      process.env.GOOGLE_APPLICATION_CREDENTIALS)
   );
 }
 
@@ -25,15 +25,17 @@ function getAdminApp(): App | null {
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID!;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n');
+  const credential = process.env.GOOGLE_APPLICATION_CREDENTIALS
+    ? applicationDefault()
+    : cert({
+        projectId,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+      });
 
   return initializeApp({
-    credential: cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    }),
+    credential,
+    projectId,
   });
 }
 
@@ -45,9 +47,8 @@ export function getAdminDb(): Firestore | null {
     const app = getAdminApp();
     if (!app) return null;
     const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
-    // In Google Cloud Firestore, the default database is '(default)' (with parentheses).
-    // Passing 'default' causes a 5 NOT_FOUND error. If unset or 'default' or '(default)',
-    // call getFirestore(app) without databaseId so it connects to the standard default database.
+    // Treat "default" as Firestore's implicit "(default)" database. Named
+    // databases are addressed explicitly by their database ID.
     if (dbId && dbId !== 'default' && dbId !== '(default)') {
       _db = getFirestore(app, dbId);
     } else {

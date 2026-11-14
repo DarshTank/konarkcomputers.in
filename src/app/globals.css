@@ -104,6 +104,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  min-width: 0;
 }
 
 html {
@@ -121,6 +122,52 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  min-width: 0;
+}
+
+/* Keep grid and flex children from forcing the page wider than the viewport. */
+main,
+section,
+article,
+aside,
+nav,
+header,
+footer,
+.container,
+.grid,
+[class*="Grid"],
+[class*="grid"] {
+  min-width: 0;
+}
+
+main {
+  overflow-x: clip;
+}
+
+/* Long customer supplied text, URLs, and product names should wrap on phones. */
+h1,
+h2,
+h3,
+h4,
+p,
+li,
+td,
+th,
+label,
+a,
+button,
+code {
+  overflow-wrap: anywhere;
+}
+
+iframe,
+video,
+svg {
+  max-width: 100%;
+}
+
+table {
+  max-width: 100%;
 }
 
 /* Subtle noise texture on body */
@@ -378,6 +425,29 @@ p {
   .grid--4, .grid--3, .grid--2 { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 480px) {
+  :root {
+    --section-padding: clamp(2.5rem, 10vw, 3.5rem);
+    --container-padding: 1rem;
+  }
+
+  .section-header {
+    margin-bottom: var(--space-10);
+  }
+
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --container-padding: 0.75rem;
+    --section-padding: 2.25rem;
+  }
+}
+
 /* ── Custom Scrollbar ── */
 ::-webkit-scrollbar {
   width: 8px;
@@ -394,6 +464,19 @@ p {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent-hover);
+}
+
+@media (max-width: 480px) {
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 /* ── Reduced Motion ── */

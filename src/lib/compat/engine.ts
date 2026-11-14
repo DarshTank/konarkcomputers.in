@@ -17,6 +17,7 @@ export interface CompatEngineOptions {
   attributes: AttributeForCompat[];
   rules: CompatRuleForEngine[];
   deviceContext?: DeviceContext;
+  strict?: boolean;
 }
 
 /**
@@ -42,7 +43,7 @@ function isUniversal(tokens: string[]): boolean {
  * Evaluates candidate product against the current cart and device context.
  */
 export function evaluateProductCompatibility(options: CompatEngineOptions): CompatResult {
-  const { cart, candidate, categories, attributes, rules, deviceContext } = options;
+  const { cart, candidate, categories, attributes, rules, deviceContext, strict = false } = options;
 
   const reasons: CompatReason[] = [];
   const compatKeys = attributes.filter((a) => a.compatKey).map((a) => a.key);
@@ -197,7 +198,7 @@ export function evaluateProductCompatibility(options: CompatEngineOptions): Comp
           // Data is missing
           reasons.push({
             message: `Specification details missing to verify ${rule.message || 'compatibility'}`,
-            severity: 'info',
+            severity: strict ? 'block' : 'info',
             sourceProductId: cartProd.id,
             sourceProductName: cartProd.name,
             ruleId: rule.id,
@@ -307,7 +308,8 @@ export function validateCartConflicts(
   cart: { product: ProductForCompat; qty: number }[],
   categories: CategoryForCompat[],
   attributes: AttributeForCompat[],
-  rules: CompatRuleForEngine[]
+  rules: CompatRuleForEngine[],
+  options: { strict?: boolean } = {}
 ): { hasConflicts: boolean; warnings: string[] } {
   const warnings: string[] = [];
 
@@ -323,6 +325,7 @@ export function validateCartConflicts(
         categories,
         attributes,
         rules,
+        strict: options.strict,
       });
 
       if (res.status === 'incompatible') {

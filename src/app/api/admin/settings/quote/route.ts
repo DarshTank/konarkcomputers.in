@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
       revalidateTag('catalog');
       revalidatePath('/', 'layout');
       revalidatePath('/quote');
+      revalidatePath('/sitemap');
+      revalidatePath('/sitemap.xml');
       revalidatePath('/admin');
       revalidatePath('/admin/settings');
       revalidatePath('/products');

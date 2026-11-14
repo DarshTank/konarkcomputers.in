@@ -28,6 +28,8 @@ export interface Category {
   iconKey: string; // Lucide icon name
   description?: string;
   group?: string;
+  defaultGstRateBps?: number;
+  defaultHsnCode?: string;
   createdAt?: FirestoreTimestamp;
   updatedAt?: FirestoreTimestamp;
 }
@@ -99,6 +101,7 @@ export interface ProductPricing {
   priceIncludesGst: boolean;
   gstRateBps: number; // basis points, e.g. 1800 = 18%
   hsnCode: string;
+  priceSet?: boolean;
 }
 
 export interface ProductStock {
@@ -120,6 +123,7 @@ export interface Product {
   slug: string;
   categoryId: string;
   brandId: string;
+  brandName?: string;
   description: string;
   specs: Record<string, string | number | boolean | string[]>;
   compat: ProductCompat;
@@ -133,6 +137,20 @@ export interface Product {
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
   createdBy: string;
+  externalKey?: string;
+  source?: {
+    provider: 'pcpartpicker';
+    rawName: string;
+    priceUsd?: number;
+    url?: string;
+    scrapedAt: FirestoreTimestamp;
+    lastSeenAt: FirestoreTimestamp;
+    derivedFields: string[];
+  };
+  isPublished?: boolean;
+  platform?: 'intel' | 'ryzen';
+  buildEligible?: boolean;
+  buildEligibleOverride?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +165,7 @@ export interface ServiceItem {
   priceIncludesGst: boolean;
   gstRateBps: number;
   isActive: boolean;
+  autoAddToBuilds?: boolean;
   createdAt?: FirestoreTimestamp;
   updatedAt?: FirestoreTimestamp;
 }
@@ -263,6 +282,13 @@ export interface QuoteDeviceContext {
   model?: string;
 }
 
+export interface QuoteSwapSnapshot {
+  originalProductId: string;
+  replacementProductId: string;
+  replacementName: string;
+  selectedAt: FirestoreTimestamp;
+}
+
 export interface QuoteStatusEntry {
   status: QuoteStatus;
   timestamp: FirestoreTimestamp;
@@ -282,6 +308,17 @@ export interface Quote {
   companySnapshot: CompanySettings;
   totals: QuoteTotals;
   deviceContext?: QuoteDeviceContext;
+  buildContext?: {
+    platform: 'intel' | 'ryzen';
+    budgetPaise: number;
+    profileId?: string;
+    baseBuildTotalPaise: number;
+    overBudget: boolean;
+    catalogVersion?: string;
+    selectedSwaps?: QuoteSwapSnapshot[];
+  };
+  catalogVersion?: string;
+  selectedSwaps?: QuoteSwapSnapshot[];
   warnings: string[];
   validUntil: FirestoreTimestamp;
   pdfBlobPathname?: string;
@@ -289,6 +326,36 @@ export interface Quote {
   internalNotes?: string; // admin notes
   createdAt: FirestoreTimestamp;
   statusHistory: QuoteStatusEntry[];
+}
+
+export interface SliderConfig {
+  minPaise: number;
+  maxPaise: number;
+  stepPaise: number;
+  presetsPaise: number[];
+}
+
+export interface BuildProfile {
+  id: string;
+  name: string;
+  tier: number;
+  isActive: boolean;
+  minBudgetPaise: number;
+  maxBudgetPaise: number;
+  shares: Record<string, number>;
+  required: string[];
+  optional: string[];
+  minSpecs: Record<string, Record<string, number | string>>;
+}
+
+export interface BuildConfig {
+  platforms: { intel: SliderConfig; ryzen: SliderConfig };
+  tolerancePct: number;
+  stretchPct: number;
+  maxBuildsShown: number;
+  supportedSockets: { intel: string[]; ryzen: string[] };
+  autoServiceItemIds: string[];
+  requireGpuWhenNoIgpu: boolean;
 }
 
 // ---------------------------------------------------------------------------

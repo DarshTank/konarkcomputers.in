@@ -33,6 +33,8 @@ export default function AdminProductsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -47,21 +49,23 @@ export default function AdminProductsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/products');
-      const data = await res.json();
+      const query = new URLSearchParams({ page: String(currentPage), pageSize: String(pageSize), search: searchTerm, category: selectedCategory, stock: selectedStock });
+      const [res, catRes, brandRes, attrRes] = await Promise.all([
+        fetch(`/api/admin/products?${query}`),
+        fetch('/api/admin/categories'),
+        fetch('/api/admin/brands'),
+        fetch('/api/admin/attributes'),
+      ]);
+      const [data, catData, brandData, attrData] = await Promise.all([
+        res.json(),
+        catRes.json(),
+        brandRes.json(),
+        attrRes.json(),
+      ]);
       if (data.products) setProducts(data.products);
-
-      // Load supporting meta
-      const catRes = await fetch('/api/admin/categories');
-      const catData = await catRes.json();
+      if (data.pagination) setTotalProducts(data.pagination.total);
       if (catData.categories) setCategories(catData.categories);
-
-      const brandRes = await fetch('/api/admin/brands');
-      const brandData = await brandRes.json();
       if (brandData.brands) setBrands(brandData.brands);
-
-      const attrRes = await fetch('/api/admin/attributes');
-      const attrData = await attrRes.json();
       if (attrData.attributes) setAttributes(attrData.attributes);
     } catch (err) {
       console.warn('Failed to fetch data:', err);
@@ -72,14 +76,15 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, pageSize, searchTerm, selectedCategory, selectedStock]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedStock]);
 
-  // Filtered Products
+  // The API applies these filters server-side; this memo keeps compatibility with
+  // older deployments that still return the complete catalog.
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchCat = selectedCategory === 'all' || p.categoryId === selectedCategory;
@@ -92,11 +97,28 @@ export default function AdminProductsPage() {
     });
   }, [products, selectedCategory, selectedStock, searchTerm]);
 
-  // Paginated Products
+  // The API already returns the requested page. Keep the local filter only as
+  // a compatibility fallback for older deployments that return all products.
   const paginatedProducts = useMemo(() => {
+    const serverReturnedPage = totalProducts > products.length ||
+      (currentPage > 1 && products.length > 0);
+    if (serverReturnedPage) return filteredProducts;
     const start = (currentPage - 1) * pageSize;
     return filteredProducts.slice(start, start + pageSize);
-  }, [filteredProducts, currentPage, pageSize]);
+  }, [filteredProducts, totalProducts, products.length, currentPage, pageSize]);
+
+  const handleBulk = async (operation: 'activate' | 'deactivate' | 'publish' | 'unpublish' | 'delete') => {
+    if (!selectedIds.length || (operation === 'delete' && !confirm('Delete selected products?'))) return;
+    const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'bulk', operation, ids: selectedIds }) });
+    if (res.ok) { setSelectedIds([]); await loadData(); }
+  };
+
+  const handleImportCSV = async (file: File) => {
+    const csv = await file.text();
+    const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'import', csv }) });
+    const data = await res.json();
+    if (!res.ok) alert(data.error || 'CSV import failed'); else await loadData();
+  };
 
   // Quick Price Save
   const handleQuickPriceSave = async (id: string) => {
@@ -205,7 +227,21 @@ export default function AdminProductsPage() {
   };
 
   // CSV Export
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch('/api/admin/products?format=csv');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `konark-products-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch {}
+    // Keep the local fallback for offline/demo mode.
     const headers = ['id', 'sku', 'name', 'categoryId', 'brandId', 'priceRupees', 'gstRate', 'hsnCode', 'condition', 'warranty', 'status'];
     const rows = products.map((p) => [
       p.id,
@@ -285,6 +321,13 @@ export default function AdminProductsPage() {
           {/* Toolbar */}
           <div className={styles.cardHeader}>
             <div className={styles.tableToolbar}>
+              <input type="file" accept=".csv,text/csv" style={{ display: 'none' }} id="product-csv-import" onChange={(e) => e.target.files?.[0] && handleImportCSV(e.target.files[0])} />
+              <button type="button" className={styles.btnSecondary} onClick={() => document.getElementById('product-csv-import')?.click()}><Upload size={14} /> Import CSV</button>
+              {selectedIds.length > 0 && <>
+                <button type="button" className={styles.btnSecondary} onClick={() => handleBulk('activate')}>Activate selected</button>
+                <button type="button" className={styles.btnSecondary} onClick={() => handleBulk('deactivate')}>Deactivate selected</button>
+                <button type="button" className={styles.btnSecondary} onClick={() => handleBulk('delete')}>Delete selected</button>
+              </>}
               <div className={styles.searchInputWrapper}>
                 <Search size={14} className={styles.searchInputIcon} />
                 <input
@@ -324,7 +367,7 @@ export default function AdminProductsPage() {
             </div>
 
             <span style={{ fontSize: 'var(--text-xs)', color: '#64748b' }}>
-              Showing {filteredProducts.length} of {products.length} products
+              Showing {filteredProducts.length} of {totalProducts || products.length} products
             </span>
           </div>
 
@@ -333,6 +376,7 @@ export default function AdminProductsPage() {
             <table className={styles.dataTable}>
               <thead>
                 <tr>
+                  <th><input type="checkbox" aria-label="Select all visible products" checked={paginatedProducts.length > 0 && paginatedProducts.every((p) => selectedIds.includes(p.id))} onChange={(e) => setSelectedIds(e.target.checked ? paginatedProducts.map((p) => p.id) : [])} /></th>
                   <th>SKU</th>
                   <th>Product Name</th>
                   <th>Category</th>
@@ -347,6 +391,7 @@ export default function AdminProductsPage() {
                   const isQuickEditing = quickEditId === p.id;
                   return (
                     <tr key={p.id}>
+                      <td><input type="checkbox" aria-label={`Select ${p.name}`} checked={selectedIds.includes(p.id)} onChange={(e) => setSelectedIds((ids) => e.target.checked ? [...new Set([...ids, p.id])] : ids.filter((id) => id !== p.id))} /></td>
                       <td>
                         <code>{p.sku}</code>
                       </td>
@@ -460,7 +505,7 @@ export default function AdminProductsPage() {
 
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredProducts.length}
+            totalItems={totalProducts || filteredProducts.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}
@@ -757,4 +802,3 @@ export default function AdminProductsPage() {
     </div>
   );
 }
-

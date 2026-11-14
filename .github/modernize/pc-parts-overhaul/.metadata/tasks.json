@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Implementation tasks for the PC parts overhaul. Execute without destructive database operations.",
+  "tasks": [
+    {
+      "type": "setupBaseline",
+      "id": "001-setup-baseline",
+      "description": "Capture the current PC-parts, quote, build, and admin behavior before changes.",
+      "reason": "The overhaul spans shared data and user flows and needs a reproducible comparison point.",
+      "requirements": "Snapshot the relevant source and test behavior without changing the database. Record focused test, typecheck, and build commands plus external-service assumptions.",
+      "snapshotFolder": "src",
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "002-transform-pc-part-normalizers",
+      "description": "Add category-specific PC-part normalizers and deterministic derivation rules.",
+      "reason": "Imported parts need consistent fields for compatibility, pricing, search, and build generation.",
+      "requirements": "Define category-specific normalization and derivation behavior for the supported PC-part categories. Add representative fixtures, invalid-input coverage, and regression tests. Keep source/raw fields available for auditability and do not alter unrelated catalog behavior.",
+      "dependencies": ["001-setup-baseline"],
+      "skills": [{ "name": "pc-part-normalizers-and-derivations", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "003-transform-safe-seed-reseed-storage",
+      "description": "Make PC-part seed/reseed idempotent, ownership-safe, and storage-split.",
+      "reason": "Repeated imports must converge without overwriting administrator-owned fields or requiring destructive wipes.",
+      "requirements": "Use deterministic identity and idempotent upserts. Separate imported/source data from admin-owned catalog data while preserving existing ownership fields and compatibility. Add dry-run/reporting behavior, repeat-run tests, conflict handling, and explicit safeguards against destructive database operations.",
+      "dependencies": ["002-transform-pc-part-normalizers"],
+      "skills": [{ "name": "idempotent-ownership-safe-seeding", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "004-transform-admin-catalog-operations",
+      "description": "Improve admin pagination, bulk operations, CSV support, and build settings.",
+      "reason": "Administrators need scalable catalog workflows and safe control of generator configuration.",
+      "requirements": "Provide server-backed pagination and filtering, safe bulk actions with authorization and auditability, validated CSV import/export behavior, and admin management for build settings/profiles. Preserve existing single-record operations and validate malformed or oversized input.",
+      "dependencies": ["003-transform-safe-seed-reseed-storage"],
+      "skills": [{ "name": "admin-catalog-operations-and-build-settings", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "005-transform-shared-rate-limiting",
+      "description": "Apply shared rate limiting to public and sensitive API flows.",
+      "reason": "Shared protection is needed across quote, build, contact, upload, and admin-sensitive endpoints.",
+      "requirements": "Centralize rate-limit policy and response behavior, apply it consistently to relevant routes, preserve legitimate admin and customer workflows, and make limits/configuration testable. Do not expose secrets or rely on process-local state where production deployment requires shared coordination.",
+      "dependencies": ["004-transform-admin-catalog-operations"],
+      "skills": [{ "name": "shared-api-rate-limiting", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "006-transform-quote-budget-and-swaps",
+      "description": "Add quote budget flow, part swaps, live refresh, and over-budget state.",
+      "reason": "Customers need transparent control of build cost while compatibility and quote totals remain accurate.",
+      "requirements": "Support setting and editing a budget, swapping compatible parts, refreshing catalog/pricing data without losing valid user state, and clearly representing under-, in-, and over-budget outcomes. Preserve compatibility warnings, quantities, tax calculations, and quote submission behavior.",
+      "dependencies": ["005-transform-shared-rate-limiting"],
+      "skills": [{ "name": "quote-budget-swaps-and-live-refresh", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "007-transform-quote-pdf-build-context",
+      "description": "Keep quote and PDF output aligned with build context.",
+      "reason": "Generated builds and downloadable/customer-facing quotes must reflect the same selections, budget, pricing, and context.",
+      "requirements": "Propagate build platform, profile, budget, selected swaps, catalog version, customer/tax context, and over-budget state consistently through quote persistence and PDF generation. Preserve existing PDF validity and avoid embedding environment-specific secrets or unstable data.",
+      "dependencies": ["006-transform-quote-budget-and-swaps"],
+      "skills": [{ "name": "quote-pdf-build-context", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "integrationTest",
+      "id": "008-integrationTest-generator-quality",
+      "description": "Build property, performance, and integration tests for the generator and overhaul flows.",
+      "reason": "The generator combines normalized data, compatibility, budgets, pricing, and persistence boundaries that need broader validation than examples alone.",
+      "requirements": "Add deterministic property-based coverage for generator invariants, performance checks with representative catalog sizes, and integration tests covering normalization-to-generation, admin settings, quote refresh/swaps, persistence, and PDF context. Tests must avoid destructive databases and use isolated fixtures/mocks or an explicitly documented emulator.",
+      "dependencies": [
+        "001-setup-baseline",
+        "002-transform-pc-part-normalizers",
+        "003-transform-safe-seed-reseed-storage",
+        "004-transform-admin-catalog-operations",
+        "005-transform-shared-rate-limiting",
+        "006-transform-quote-budget-and-swaps",
+        "007-transform-quote-pdf-build-context"
+      ]
+    },
+    {
+      "type": "transform",
+      "id": "009-transform-operational-runbook",
+      "description": "Document the safe operational runbook for catalog and quote operations.",
+      "reason": "Operators need repeatable procedures for seeding, reseeding, CSV workflows, verification, rollback, and incident recovery.",
+      "requirements": "Document prerequisites, environment variables, dry-run and reseed procedures, ownership-preservation guarantees, backup/restore expectations, rate-limit operations, build/quote verification, failure handling, rollback boundaries, and the prohibition on destructive wipes. Include focused validation commands: npm test, npx tsc --noEmit, and npm run build.",
+      "dependencies": ["008-integrationTest-generator-quality"],
+      "skills": [{ "name": "pc-parts-operational-runbook", "location": "builtin" }],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    }
+  ],
+  "metadata": {
+    "planName": "pc-parts-overhaul",
+    "projectName": "konarkcomputers.in",
+    "language": "typescript",
+    "createdAt": "2026-11-13T13:50:25.680+05:30",
+    "version": "1.0"
+  }
+}
