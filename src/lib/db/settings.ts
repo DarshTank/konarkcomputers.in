@@ -9,6 +9,7 @@ import {
   SEED_COMPANY_SETTINGS,
   SEED_TAX_SETTINGS,
 } from './seed-data';
+import { PUBLIC_QUOTES_TEMPORARILY_DISABLED } from '../feature-flags';
 
 // Global memory cache shared across route executions in the same Node process
 declare global {
@@ -120,6 +121,12 @@ function writeLocalQuoteSettings(settings: QuoteSettings) {
 export async function getQuoteSettings(): Promise<QuoteSettings> {
   // 1. Check Firestore database
   const retryAfter = globalThis.__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__ ?? 0;
+  if (Date.now() < retryAfter) {
+    // A recent Firestore failure (or failed write) means remote data may be
+    // stale. Prefer the value already saved by this process during backoff.
+    const local = readLocalQuoteSettings();
+    if (local) return local;
+  }
   if (Date.now() >= retryAfter) {
     try {
       const db = getAdminDb();
@@ -177,8 +184,18 @@ export async function setQuoteSettings(settings: QuoteSettings): Promise<void> {
     if (db) {
       await db.collection('settings').doc('quote').set(settings, { merge: true });
     }
+    // A successful write means subsequent reads can safely consult Firestore.
+    globalThis.__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__ = undefined;
   } catch (e) {
-    console.warn('Firestore setQuoteSettings warning:', e);
+    // Keep the value we just saved locally authoritative for a short period.
+    // Otherwise getQuoteSettings() can immediately read the old Firestore value
+    // after a quota/availability error and undo the admin's toggle.
+    globalThis.__KONARK_QUOTE_SETTINGS_DB_RETRY_AFTER__ =
+      Date.now() + FIRESTORE_QUOTA_RETRY_DELAY_MS;
+    console.warn(
+      `Firestore setQuoteSettings warning; using the saved local value for ${FIRESTORE_QUOTA_RETRY_DELAY_MS / 1000}s:`,
+      formatSettingsError(e)
+    );
   }
 
   // 3. Persist to Vercel Blob cloud storage (persists across all Vercel function instances)
@@ -186,6 +203,9 @@ export async function setQuoteSettings(settings: QuoteSettings): Promise<void> {
 }
 
 export async function isQuoteEnabled(): Promise<boolean> {
+  if (PUBLIC_QUOTES_TEMPORARILY_DISABLED && process.env.NODE_ENV !== 'test') {
+    return false;
+  }
   const settings = await getQuoteSettings();
   return settings.enabled !== false;
 }

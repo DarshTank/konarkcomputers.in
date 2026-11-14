@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import type { Product } from '@/lib/db/types';
+import { isQuoteEnabled } from '@/lib/db/settings';
 
 const PAGE_SIZE = 24;
 
 export async function GET(request: NextRequest) {
   try {
+    if (!(await isQuoteEnabled())) {
+      return NextResponse.json({ error: 'Quotation builder is temporarily unavailable.' }, { status: 404 });
+    }
+
     const db = getAdminDb();
     if (!db) {
       return NextResponse.json({ error: 'Product database is unavailable' }, { status: 503 });

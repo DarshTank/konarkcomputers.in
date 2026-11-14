@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, Phone, MapPin, Clock } from "lucide-react";
 import { BUSINESS } from "@/lib/business";
+import { PUBLIC_QUOTES_TEMPORARILY_DISABLED } from "@/lib/feature-flags";
 import styles from "./Navbar.module.css";
 
 const baseNavLinks = [
@@ -89,7 +90,9 @@ export function Navbar() {
     };
   }, [pathname]);
 
-  const navLinks = baseNavLinks.filter((link) => !link.isQuote || quoteEnabled);
+  const navLinks = baseNavLinks.filter(
+    (link) => !link.isQuote || (!PUBLIC_QUOTES_TEMPORARILY_DISABLED && quoteEnabled)
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);

@@ -15,6 +15,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import styles from '../admin.module.css';
+import { PUBLIC_QUOTES_TEMPORARILY_DISABLED } from '@/lib/feature-flags';
 
 interface QuoteVisibilityToggleProps {
   initialEnabled: boolean;
@@ -22,7 +23,9 @@ interface QuoteVisibilityToggleProps {
 
 export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleProps) {
   const router = useRouter();
-  const [enabled, setEnabled] = useState(initialEnabled);
+  const [enabled, setEnabled] = useState(
+    PUBLIC_QUOTES_TEMPORARILY_DISABLED ? false : initialEnabled
+  );
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -31,7 +34,7 @@ export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleP
     fetch('/api/settings/quote', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        if (typeof data.enabled === 'boolean') {
+        if (!PUBLIC_QUOTES_TEMPORARILY_DISABLED && typeof data.enabled === 'boolean') {
           setEnabled(data.enabled);
           try {
             localStorage.setItem('konark_quote_enabled', String(data.enabled));
@@ -76,6 +79,7 @@ export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleP
   };
 
   const handleToggle = async () => {
+    if (PUBLIC_QUOTES_TEMPORARILY_DISABLED) return;
     if (loading) return;
     const nextState = !enabled;
     setLoading(true);
@@ -160,12 +164,16 @@ export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleP
                   enabled ? styles.featureStatusDotActive : styles.featureStatusDotInactive
                 }`}
               />
-              {enabled ? 'Live & Accessible' : 'Hidden (404 Disabled)'}
+              {PUBLIC_QUOTES_TEMPORARILY_DISABLED
+                ? 'Temporarily Offline'
+                : enabled ? 'Live & Accessible' : 'Hidden (404 Disabled)'}
             </span>
           </div>
 
           <p className={styles.featureDesc}>
-            {enabled ? (
+            {PUBLIC_QUOTES_TEMPORARILY_DISABLED ? (
+              <>Temporarily unavailable. The quotation page and its navigation links are disabled.</>
+            ) : enabled ? (
               <>
                 Shown in the website navigation bar. Customers can access and build custom quotes at{' '}
                 <strong style={{ color: 'var(--color-dark)' }}>konarkcomputers.in/quote</strong>.
@@ -216,7 +224,7 @@ export function QuoteVisibilityToggle({ initialEnabled }: QuoteVisibilityToggleP
           aria-checked={enabled}
           aria-label="Toggle Public Quotation Page"
           onClick={handleToggle}
-          disabled={loading}
+          disabled={loading || PUBLIC_QUOTES_TEMPORARILY_DISABLED}
           className={styles.switchToggleWrap}
           style={{ opacity: loading ? 0.65 : 1 }}
         >

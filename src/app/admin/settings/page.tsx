@@ -5,6 +5,7 @@ import type { TaxSettings, CompanySettings, BuildConfig } from '@/lib/db/types';
 import { Settings, Save, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { getAdminIdToken } from '@/lib/firebase/client';
 import styles from '../admin.module.css';
+import { PUBLIC_QUOTES_TEMPORARILY_DISABLED } from '@/lib/feature-flags';
 
 export default function AdminSettingsPage() {
   const [tax, setTax] = useState<Partial<TaxSettings>>({
@@ -31,7 +32,7 @@ export default function AdminSettingsPage() {
 
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [quoteEnabled, setQuoteEnabled] = useState(true);
+  const [quoteEnabled, setQuoteEnabled] = useState(!PUBLIC_QUOTES_TEMPORARILY_DISABLED);
   const [buildConfig, setBuildConfig] = useState<BuildConfig | null>(null);
 
   useEffect(() => {
@@ -46,7 +47,9 @@ export default function AdminSettingsPage() {
     fetch('/api/admin/settings/quote')
       .then((res) => res.json())
       .then((data) => {
-        if (typeof data.enabled === 'boolean') setQuoteEnabled(data.enabled);
+        if (!PUBLIC_QUOTES_TEMPORARILY_DISABLED && typeof data.enabled === 'boolean') {
+          setQuoteEnabled(data.enabled);
+        }
       })
       .catch(() => {});
     fetch('/api/admin/builds/config')
@@ -76,12 +79,12 @@ export default function AdminSettingsPage() {
           credentials: 'include',
           body: JSON.stringify({ tax, company }),
         }),
-        fetch('/api/admin/settings/quote', {
+        !PUBLIC_QUOTES_TEMPORARILY_DISABLED ? fetch('/api/admin/settings/quote', {
           method: 'POST',
           headers,
           credentials: 'include',
           body: JSON.stringify({ enabled: quoteEnabled }),
-        }),
+        }) : Promise.resolve(new Response(null, { status: 200 })),
         buildConfig ? fetch('/api/admin/builds/config', {
           method: 'PUT',
           headers,
@@ -373,11 +376,15 @@ export default function AdminSettingsPage() {
                         quoteEnabled ? styles.featureStatusDotActive : styles.featureStatusDotInactive
                       }`}
                     />
-                    {quoteEnabled ? 'Live on Website' : 'Hidden from Website (404)'}
+                    {PUBLIC_QUOTES_TEMPORARILY_DISABLED
+                      ? 'Temporarily Offline'
+                      : quoteEnabled ? 'Live on Website' : 'Hidden from Website (404)'}
                   </span>
                 </div>
                 <p style={{ fontSize: 'var(--text-xs)', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-                  {quoteEnabled
+                  {PUBLIC_QUOTES_TEMPORARILY_DISABLED
+                    ? 'Quotation builder is temporarily unavailable. Re-enable it in the feature flag when maintenance is complete.'
+                    : quoteEnabled
                     ? 'Quotation builder link is visible in the main Navbar. URL /quote is active.'
                     : 'Quotation builder is hidden from the Navbar. Anyone entering /quote in the URL bar gets 404 (Not Found).'}
                 </p>
@@ -389,6 +396,7 @@ export default function AdminSettingsPage() {
                 aria-checked={quoteEnabled}
                 aria-label="Toggle Public Quotation Page"
                 onClick={() => setQuoteEnabled((prev) => !prev)}
+                disabled={PUBLIC_QUOTES_TEMPORARILY_DISABLED}
                 className={styles.switchToggleWrap}
               >
                 <div
