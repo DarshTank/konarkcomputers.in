@@ -3,7 +3,6 @@ import { revalidateTag } from 'next/cache';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/firebase/auth';
 import { compatibilityRuleInputSchema } from '@/lib/db/schemas';
-import { SEED_COMPATIBILITY_RULES, SEED_CATEGORIES, SEED_ATTRIBUTES } from '@/lib/db/seed-data';
 import type { CompatibilityRule, Product } from '@/lib/db/types';
 import { evaluateProductCompatibility } from '@/lib/compat/engine';
 
@@ -14,14 +13,10 @@ export async function GET() {
       const db = getAdminDb();
       if (db) {
         const snap = await db.collection('compatibilityRules').get();
-        if (!snap.empty) {
-          rules = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
+        rules = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       }
-    } catch {}
-
-    if (rules.length === 0) {
-      rules = SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[];
+    } catch (error) {
+      console.warn('Could not read compatibility rules from Firestore:', error);
     }
 
     return NextResponse.json({ rules });
@@ -41,9 +36,9 @@ export async function POST(request: NextRequest) {
       const res = evaluateProductCompatibility({
         cart: [{ product: sourceProduct, qty: 1 }],
         candidate: candidateProduct,
-        categories: SEED_CATEGORIES as any,
-        attributes: SEED_ATTRIBUTES as any,
-        rules: rules || SEED_COMPATIBILITY_RULES,
+        categories: [],
+        attributes: [],
+        rules: rules || [],
       });
       return NextResponse.json({ testResult: res });
     }

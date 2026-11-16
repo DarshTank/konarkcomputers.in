@@ -23,6 +23,7 @@ export interface Category {
   slug: string;
   parentId?: string;
   sortOrder: number;
+  productCount?: number;
   isActive: boolean;
   deviceScope: 'desktop' | 'laptop' | 'both';
   iconKey: string; // Lucide icon name

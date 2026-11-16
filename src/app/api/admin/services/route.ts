@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/firebase/auth';
-import { SEED_SERVICES } from '@/lib/db/seed-data';
 import type { ServiceItem } from '@/lib/db/types';
 
 export async function GET() {
@@ -12,14 +11,10 @@ export async function GET() {
       const db = getAdminDb();
       if (db) {
         const snap = await db.collection('services').get();
-        if (!snap.empty) {
-          services = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
+        services = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       }
-    } catch {}
-
-    if (services.length === 0) {
-      services = SEED_SERVICES as unknown as ServiceItem[];
+    } catch (error) {
+      console.warn('Could not read services from Firestore:', error);
     }
 
     return NextResponse.json({ services });

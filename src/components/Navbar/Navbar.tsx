@@ -112,7 +112,7 @@ export function Navbar() {
   return (
     <>
       {/* Top Info Bar */}
-      <div className={styles.topBar}>
+      <div className={styles.topBar} id="page-top">
         <div className={`container ${styles.topBarInner}`}>
           <div className={styles.topBarItem}>
             <MapPin size={14} />

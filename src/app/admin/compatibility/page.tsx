@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import type { CompatibilityRule, Category } from '@/lib/db/types';
-import { Plus, Trash2, Search } from 'lucide-react';
+import { Plus, Trash2, Search, Edit2 } from 'lucide-react';
 import styles from '../admin.module.css';
 import Pagination from '../components/Pagination';
 
@@ -16,6 +16,7 @@ export default function AdminCompatibilityPage() {
 
   // New Rule Form
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [sourceCat, setSourceCat] = useState('ram');
   const [targetCat, setTargetCat] = useState('ram');
   const [sourceField, setSourceField] = useState('specs.memoryType');
@@ -49,6 +50,7 @@ export default function AdminCompatibilityPage() {
     e.preventDefault();
 
     const payload = {
+      ...(editingRuleId ? { id: editingRuleId } : {}),
       sourceCategoryId: sourceCat,
       targetCategoryId: targetCat,
       constraints: [{ sourceField, targetField, operator }],
@@ -58,17 +60,43 @@ export default function AdminCompatibilityPage() {
     };
 
     const res = await fetch('/api/admin/compatibility', {
-      method: 'POST',
+      method: editingRuleId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     if (res.ok) {
       setIsModalOpen(false);
+      setEditingRuleId(null);
       await loadData();
     } else {
       alert('Failed to save compatibility rule.');
     }
+  };
+
+  const openNewRule = () => {
+    setEditingRuleId(null);
+    setSourceCat(categories[0]?.id || '');
+    setTargetCat(categories[0]?.id || '');
+    setSourceField('specs.memoryType');
+    setTargetField('specs.memoryType');
+    setOperator('eq');
+    setSeverity('block');
+    setMessage('Memory generations must match.');
+    setIsModalOpen(true);
+  };
+
+  const openEditRule = (rule: CompatibilityRule) => {
+    const constraint = rule.constraints[0];
+    setEditingRuleId(rule.id);
+    setSourceCat(rule.sourceCategoryId);
+    setTargetCat(rule.targetCategoryId);
+    setSourceField(constraint?.sourceField || '');
+    setTargetField(constraint?.targetField || '');
+    setOperator(constraint?.operator || 'eq');
+    setSeverity(rule.severity);
+    setMessage(rule.message);
+    setIsModalOpen(true);
   };
 
   const handleDeleteRule = async (id: string) => {
@@ -109,7 +137,7 @@ export default function AdminCompatibilityPage() {
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openNewRule}
           className="btn btn--primary"
           style={{ minHeight: '38px', padding: '6px 14px', fontSize: 'var(--text-xs)' }}
         >
@@ -140,7 +168,15 @@ export default function AdminCompatibilityPage() {
           </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table className={styles.dataTable}>
+            <table className={`${styles.dataTable} ${styles.compatibilityTable}`}>
+              <colgroup>
+                <col className={styles.compatibilitySourceColumn} />
+                <col className={styles.compatibilityTargetColumn} />
+                <col className={styles.compatibilityMappingColumn} />
+                <col className={styles.compatibilitySeverityColumn} />
+                <col className={styles.compatibilityMessageColumn} />
+                <col className={styles.compatibilityActionColumn} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Source Category</th>
@@ -189,6 +225,14 @@ export default function AdminCompatibilityPage() {
                       <td>
                         <button
                           type="button"
+                          onClick={() => openEditRule(r)}
+                          className={styles.actionBtn}
+                          title="Edit compatibility rule"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleDeleteRule(r.id)}
                           className={styles.actionBtn}
                           style={{ color: '#ef4444' }}
@@ -220,7 +264,7 @@ export default function AdminCompatibilityPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard} style={{ maxWidth: '580px' }}>
             <h3 style={{ marginBottom: '18px', fontWeight: 'bold', fontFamily: 'var(--font-display)', fontSize: 'var(--text-xl)' }}>
-              New Compatibility Rule
+              {editingRuleId ? 'Edit Compatibility Rule' : 'New Compatibility Rule'}
             </h3>
             <form onSubmit={handleCreateRule}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -321,11 +365,18 @@ export default function AdminCompatibilityPage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className={styles.btnCancel}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingRuleId(null);
+                  }}
+                  className={styles.btnCancel}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn--primary" style={{ minHeight: '38px', padding: '6px 18px', fontSize: 'var(--text-xs)' }}>
-                  Save Rule
+                  {editingRuleId ? 'Update Rule' : 'Save Rule'}
                 </button>
               </div>
             </form>

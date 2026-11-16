@@ -3,7 +3,6 @@ import { revalidateTag } from 'next/cache';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/firebase/auth';
 import { attributeDefinitionInputSchema } from '@/lib/db/schemas';
-import { SEED_ATTRIBUTES } from '@/lib/db/seed-data';
 import type { AttributeDefinition } from '@/lib/db/types';
 
 export async function GET() {
@@ -13,14 +12,10 @@ export async function GET() {
       const db = getAdminDb();
       if (db) {
         const snap = await db.collection('attributeDefinitions').orderBy('displayOrder', 'asc').get();
-        if (!snap.empty) {
-          attributes = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
+        attributes = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       }
-    } catch {}
-
-    if (attributes.length === 0) {
-      attributes = SEED_ATTRIBUTES as unknown as AttributeDefinition[];
+    } catch (error) {
+      console.warn('Could not read attributes from Firestore:', error);
     }
 
     return NextResponse.json({ attributes });

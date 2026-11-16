@@ -4,6 +4,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/firebase/auth';
 import { productInputSchema } from '@/lib/db/schemas';
 import type { Product } from '@/lib/db/types';
+import { adjustCategoryProductCount, moveCategoryProduct } from '@/lib/db/category-counts';
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,6 +81,10 @@ export async function POST(request: NextRequest) {
       const db = getAdminDb();
       const nowSec = Math.floor(Date.now() / 1000);
       if (db) {
+        const deletedCategoryIds = body.operation === 'delete'
+          ? (await Promise.all(ids.map((id: string) => db.collection('products').doc(id).get())))
+            .map((snapshot) => snapshot.get('categoryId') as string | undefined)
+          : [];
         const batch = db.batch();
         for (const id of ids) {
           const ref = db.collection('products').doc(id);
@@ -102,6 +107,13 @@ export async function POST(request: NextRequest) {
           }, { merge: true });
         }
         await batch.commit();
+        if (body.operation === 'delete') {
+          await Promise.all(
+            deletedCategoryIds.map((categoryId) =>
+              adjustCategoryProductCount(categoryId, -1)
+            )
+          );
+        }
         await db.collection('adminAudit').add({ who: user?.email || 'admin', action: `bulk_${body.operation}`, collection: 'products', docIds: ids, timestamp: { seconds: nowSec, nanoseconds: 0 } });
       }
       try { revalidateTag('catalog'); } catch {}
@@ -156,6 +168,7 @@ export async function POST(request: NextRequest) {
       const db = getAdminDb();
       if (db) {
         await db.collection('products').doc(newId).set(newProduct);
+        await adjustCategoryProductCount(newProduct.categoryId, 1);
 
         // Audit Log Entry
         await db.collection('adminAudit').add({
@@ -216,6 +229,10 @@ export async function PUT(request: NextRequest) {
           },
           { merge: true }
         );
+        await moveCategoryProduct(
+          beforeData?.categoryId as string | undefined,
+          rest.categoryId as string | undefined
+        );
 
         // Audit Log Entry (price/stock changes)
         await db.collection('adminAudit').add({
@@ -257,7 +274,10 @@ export async function DELETE(request: NextRequest) {
     try {
       const db = getAdminDb();
       if (db) {
-        await db.collection('products').doc(id).delete();
+        const productRef = db.collection('products').doc(id);
+        const productSnapshot = await productRef.get();
+        await productRef.delete();
+        await adjustCategoryProductCount(productSnapshot.get('categoryId'), -1);
 
         await db.collection('adminAudit').add({
           who: user?.email || 'admin',

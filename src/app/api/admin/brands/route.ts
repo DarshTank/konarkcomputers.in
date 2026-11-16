@@ -3,7 +3,6 @@ import { revalidateTag } from 'next/cache';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/firebase/auth';
 import { brandInputSchema } from '@/lib/db/schemas';
-import { SEED_BRANDS } from '@/lib/db/seed-data';
 import type { Brand } from '@/lib/db/types';
 
 export async function GET() {
@@ -13,14 +12,10 @@ export async function GET() {
       const db = getAdminDb();
       if (db) {
         const snap = await db.collection('brands').get();
-        if (!snap.empty) {
-          brands = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
+        brands = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       }
-    } catch {}
-
-    if (brands.length === 0) {
-      brands = SEED_BRANDS as unknown as Brand[];
+    } catch (error) {
+      console.warn('Could not read brands from Firestore:', error);
     }
 
     return NextResponse.json({ brands });

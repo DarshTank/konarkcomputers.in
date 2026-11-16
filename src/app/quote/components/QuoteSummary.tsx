@@ -7,7 +7,15 @@ import { FileText, Trash2, ArrowRight, ShoppingCart } from 'lucide-react';
 import styles from '../page.module.css';
 
 export function QuoteSummary({ onOpenForm }: { onOpenForm: () => void }) {
-  const { cart, removeFromQuote, totals, clearQuote, customerStateCode } = useQuote();
+  const {
+    cart,
+    removeFromQuote,
+    totals,
+    clearQuote,
+    customerStateCode,
+    budgetPaise,
+    overBudget,
+  } = useQuote();
 
   const isSameState = customerStateCode === 24;
 
@@ -108,6 +116,13 @@ export function QuoteSummary({ onOpenForm }: { onOpenForm: () => void }) {
             <span>{formatPaise(totals.grandTotalPaise)}</span>
           </div>
         </div>
+
+        {budgetPaise !== undefined && (
+          <div className={`${styles.budgetStatus} ${overBudget ? styles.budgetStatusOver : ''}`}>
+            <span>{overBudget ? 'Over budget' : 'Within budget'}</span>
+            <strong>{formatPaise(Math.abs(budgetPaise - totals.grandTotalPaise))} {overBudget ? 'over' : 'remaining'}</strong>
+          </div>
+        )}
 
         <button type="button" className={styles.getQuoteBtn} onClick={onOpenForm}>
           <span>Get Official Quote</span>

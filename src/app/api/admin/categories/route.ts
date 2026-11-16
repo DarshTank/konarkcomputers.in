@@ -3,7 +3,6 @@ import { revalidateTag } from 'next/cache';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { verifyAdminRequest } from '@/lib/firebase/auth';
 import { categoryInputSchema } from '@/lib/db/schemas';
-import { SEED_CATEGORIES } from '@/lib/db/seed-data';
 import type { Category } from '@/lib/db/types';
 
 export async function GET(request: NextRequest) {
@@ -13,14 +12,10 @@ export async function GET(request: NextRequest) {
       const db = getAdminDb();
       if (db) {
         const snap = await db.collection('categories').orderBy('sortOrder', 'asc').get();
-        if (!snap.empty) {
-          categories = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
+        categories = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       }
-    } catch {}
-
-    if (categories.length === 0) {
-      categories = SEED_CATEGORIES as unknown as Category[];
+    } catch (error) {
+      console.warn('Could not read categories from Firestore:', error);
     }
 
     return NextResponse.json({ categories });

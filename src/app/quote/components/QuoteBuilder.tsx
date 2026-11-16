@@ -3,16 +3,41 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuote } from '@/contexts/QuoteContext';
 import type { Product } from '@/lib/db/types';
-import { DeviceContextBar } from './DeviceContextBar';
 import { QuoteSidebar } from './QuoteSidebar';
 import { ProductCard } from './ProductCard';
 import { QuoteSummary } from './QuoteSummary';
 import { QuoteSubmissionModal } from './QuoteSubmissionModal';
-import { Search, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { formatPaise } from '@/lib/pricing/calculator';
 import styles from '../page.module.css';
 
+type BuildPart = {
+  id: string;
+  name: string;
+  categoryId: string;
+  brandName?: string;
+  pricing: Product['pricing'];
+  condition: Product['condition'];
+  warrantyMonths: number;
+};
+
+type RecommendedBuild = {
+  id: string;
+  profileId: string;
+  parts: BuildPart[];
+  totals: { grandTotalPaise: number };
+  budgetUsePct: number;
+  isStretch: boolean;
+};
+
 export function QuoteBuilder({ products: initialProducts }: { products: Product[] }) {
-  const { showIncompatible, getCompatibility } = useQuote();
+  const {
+    showIncompatible,
+    getCompatibility,
+    budgetPaise,
+    setBudgetPaise,
+    refreshProducts,
+  } = useQuote();
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
@@ -26,6 +51,15 @@ export function QuoteBuilder({ products: initialProducts }: { products: Product[
   const [totalPages, setTotalPages] = useState(1);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [platform, setPlatform] = useState<'intel' | 'ryzen'>('intel');
+  const [recommendedBuilds, setRecommendedBuilds] = useState<RecommendedBuild[]>([]);
+  const [buildLoading, setBuildLoading] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
+  const budgetOptions = Array.from({ length: 10 }, (_, index) => (index + 1) * 15000);
+  const selectedBudgetRupees = budgetPaise === undefined
+    ? budgetOptions[0]
+    : Math.min(150000, Math.max(15000, Math.round(budgetPaise / 1500000) * 15000));
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +82,9 @@ export function QuoteBuilder({ products: initialProducts }: { products: Product[
       })
       .then((data) => {
         if (cancelled) return;
-        setProducts(data.products || []);
+        const nextProducts = data.products || [];
+        setProducts(nextProducts);
+        refreshProducts(nextProducts);
         setTotalProducts(data.pagination?.total || 0);
         setTotalPages(data.pagination?.totalPages || 1);
       })
@@ -65,11 +101,55 @@ export function QuoteBuilder({ products: initialProducts }: { products: Product[
     return () => {
       cancelled = true;
     };
-  }, [page, selectedCategoryId, inStockOnly]);
+  }, [page, selectedCategoryId, inStockOnly, refreshToken, refreshProducts]);
 
   useEffect(() => {
     setPage(1);
   }, [selectedCategoryId, inStockOnly]);
+
+  useEffect(() => {
+    if (budgetPaise === undefined) {
+      setRecommendedBuilds([]);
+      setBuildError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setBuildLoading(true);
+    setBuildError(null);
+    fetch('/api/builds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform, budgetPaise }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.message || 'Unable to generate a matching PC build.');
+        }
+        return data;
+      })
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setRecommendedBuilds(data.builds || []);
+          if (!data.builds?.length) {
+            setBuildError('No complete build is available in this price range for the selected processor family.');
+          }
+        }
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setRecommendedBuilds([]);
+          setBuildError(error instanceof Error ? error.message : 'Unable to generate a matching PC build.');
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBuildLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [budgetPaise, platform]);
 
   // Live real-time response if quote page is disabled while active
   useEffect(() => {
@@ -201,7 +281,6 @@ export function QuoteBuilder({ products: initialProducts }: { products: Product[
               Select genuine computer &amp; laptop components. Our smart compatibility filter automatically verifies pin count, wattage, generation, and form factors to eliminate mismatched parts.
             </p>
 
-            <DeviceContextBar />
           </div>
         </div>
       </section>
@@ -256,8 +335,126 @@ export function QuoteBuilder({ products: initialProducts }: { products: Product[
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
                   {totalProducts} items
                 </span>
+                <button
+                  type="button"
+                  className={styles.refreshButton}
+                  onClick={() => setRefreshToken((current) => current + 1)}
+                  disabled={productsLoading}
+                  aria-label="Refresh product catalog"
+                  title="Refresh product catalog"
+                >
+                  <RefreshCw size={14} className={productsLoading ? styles.refreshing : ''} />
+                  Refresh
+                </button>
               </div>
             </div>
+
+            <div className={styles.budgetBar}>
+              <div>
+                <strong>Set a build budget</strong>
+                <span>
+                  {budgetPaise === undefined
+                    ? 'Choose a target from ₹15,000 to ₹1,50,000.'
+                    : `Keep your estimate within ${formatPaise(budgetPaise)}.`}
+                </span>
+              </div>
+              <div className={styles.budgetControls}>
+                <div className={styles.budgetSliderGroup}>
+                  <label htmlFor="quote-budget" className={styles.srOnly}>Budget in rupees</label>
+                  <input
+                    id="quote-budget"
+                    type="range"
+                    min="15000"
+                    max="150000"
+                    step="15000"
+                    value={selectedBudgetRupees}
+                    onChange={(event) => setBudgetPaise(Number(event.target.value) * 100)}
+                    className={styles.budgetInput}
+                  />
+                  <div className={styles.budgetBreakpoints} aria-hidden="true">
+                    {budgetOptions.map((amount, index) => (
+                      <span
+                        key={amount}
+                        style={{ left: `${(index / (budgetOptions.length - 1)) * 100}%` }}
+                      >
+                        {amount / 1000}k
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <output className={styles.budgetOutput} htmlFor="quote-budget">
+                  {formatPaise(selectedBudgetRupees * 100)}
+                </output>
+                {budgetPaise !== undefined && (
+                  <button
+                    type="button"
+                    className={styles.clearBudgetButton}
+                    onClick={() => setBudgetPaise(undefined)}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <section className={styles.buildRecommendations} aria-labelledby="build-recommendations-title">
+              <div className={styles.buildRecommendationHeader}>
+                <div>
+                  <span className={styles.sectionEyebrow}>Complete PC suggestions</span>
+                  <h2 id="build-recommendations-title">Build around your processor</h2>
+                  <p>Every suggestion includes the required parts and stays within the selected budget range.</p>
+                </div>
+                <div className={styles.platformToggle} role="group" aria-label="Processor family">
+                  <button
+                    type="button"
+                    className={platform === 'intel' ? styles.platformActive : ''}
+                    onClick={() => setPlatform('intel')}
+                  >
+                    Intel
+                  </button>
+                  <button
+                    type="button"
+                    className={platform === 'ryzen' ? styles.platformActive : ''}
+                    onClick={() => setPlatform('ryzen')}
+                  >
+                    Ryzen
+                  </button>
+                </div>
+              </div>
+
+              {budgetPaise === undefined ? (
+                <p className={styles.buildMessage}>Select a budget above to see complete Intel or Ryzen PC builds.</p>
+              ) : buildLoading ? (
+                <p className={styles.buildMessage}>Finding compatible {platform === 'intel' ? 'Intel' : 'Ryzen'} builds...</p>
+              ) : buildError ? (
+                <p className={styles.buildMessage}>{buildError}</p>
+              ) : (
+                <div className={styles.buildGrid}>
+                  {recommendedBuilds.map((build) => (
+                    <article key={build.id} className={styles.buildCard}>
+                      <div className={styles.buildCardTop}>
+                        <div>
+                          <span className={styles.buildProfile}>{build.profileId}</span>
+                          <h3>{platform === 'intel' ? 'Intel' : 'Ryzen'} complete PC</h3>
+                        </div>
+                        <strong>{formatPaise(build.totals.grandTotalPaise)}</strong>
+                      </div>
+                      <p className={styles.buildRange}>
+                        {build.isStretch ? 'Stretch option' : 'Within target'} · {Math.round(build.budgetUsePct)}% of budget
+                      </p>
+                      <ul className={styles.buildParts}>
+                        {build.parts.map((part) => (
+                          <li key={part.id}>
+                            <span>{part.name}</span>
+                            <strong>{formatPaise(part.pricing.pricePaise)}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* Products Grid */}
             {productsLoading ? (

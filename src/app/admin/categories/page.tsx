@@ -21,14 +21,33 @@ export default function AdminCategoriesPage() {
     return categories.filter((c) => c.name.toLowerCase().includes(s) || c.slug.toLowerCase().includes(s));
   }, [categories, searchTerm]);
 
+  const groupedCategories = useMemo(() => {
+    const groups = new Map<string, Category[]>();
+    for (const category of filtered) {
+      const groupName = category.group?.trim() || 'Uncategorized';
+      const group = groups.get(groupName) || [];
+      group.push(category);
+      groups.set(groupName, group);
+    }
+
+    return Array.from(groups.entries())
+      .sort(([, a], [, b]) => {
+        const orderDifference = (a[0]?.sortOrder || 0) - (b[0]?.sortOrder || 0);
+        return orderDifference || (a[0]?.name || '').localeCompare(b[0]?.name || '');
+      })
+      .flatMap(([, group]) =>
+        group.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+      );
+  }, [filtered]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, currentPage, pageSize]);
+    return groupedCategories.slice(start, start + pageSize);
+  }, [groupedCategories, currentPage, pageSize]);
 
   const loadCategories = async () => {
     try {
@@ -136,7 +155,7 @@ export default function AdminCategoriesPage() {
             <table className={styles.dataTable}>
               <thead>
                 <tr>
-                  <th>Sort</th>
+                  <th>Group</th>
                   <th>Category Name</th>
                   <th>Slug</th>
                   <th>Device Scope</th>
@@ -152,52 +171,83 @@ export default function AdminCategoriesPage() {
                     </td>
                   </tr>
                 ) : (
-                  paginated.map((c) => (
-                    <tr key={c.id}>
-                      <td>{c.sortOrder}</td>
-                      <td>
-                        <strong>{c.name}</strong>
-                      </td>
-                      <td>
-                        <code>{c.slug}</code>
-                      </td>
-                      <td>
-                        <span style={{ textTransform: 'capitalize' }}>{c.deviceScope}</span>
-                      </td>
-                      <td>
-                        <span
-                          className={`${styles.statusPill} ${
-                            c.isActive ? styles.statusActive : styles.statusInactive
-                          }`}
-                        >
-                          {c.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingCat(c);
-                            setIsModalOpen(true);
-                          }}
-                          className={styles.actionBtn}
-                        >
-                          <Edit2 size={14} />
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(c)}
-                          className={styles.actionBtn}
-                          style={{ color: '#ef4444', marginLeft: '8px' }}
-                          title="Delete category"
-                        >
-                          <Trash2 size={14} />
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  (() => {
+                    let previousGroup: string | undefined;
+                    return paginated.flatMap((c) => {
+                      const groupName = c.group?.trim() || 'Uncategorized';
+                      const isFirstInGroup = groupName !== previousGroup;
+                      previousGroup = groupName;
+                      const rows: React.ReactNode[] = [];
+
+                      if (isFirstInGroup) {
+                        const groupSize = groupedCategories.filter(
+                          (category) => (category.group?.trim() || 'Uncategorized') === groupName
+                        ).length;
+                        rows.push(
+                          <tr key={`group-${groupName}`} style={{ background: '#f8fafc' }}>
+                            <td colSpan={6} style={{ padding: '9px 16px', color: '#475569', fontWeight: 700, fontSize: '0.75rem' }}>
+                              {groupName}
+                              <span style={{ marginLeft: '8px', color: '#94a3b8', fontWeight: 500 }}>
+                                {groupSize} {groupSize === 1 ? 'category' : 'categories'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      rows.push(
+                        <tr key={c.id}>
+                          <td>
+                            <span style={{ color: '#64748b', fontWeight: 600 }}>
+                              {groupName}
+                            </span>
+                          </td>
+                          <td>
+                            <strong>{c.name}</strong>
+                          </td>
+                          <td>
+                            <code>{c.slug}</code>
+                          </td>
+                          <td>
+                            <span style={{ textTransform: 'capitalize' }}>{c.deviceScope}</span>
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.statusPill} ${
+                                c.isActive ? styles.statusActive : styles.statusInactive
+                              }`}
+                            >
+                              {c.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCat(c);
+                                setIsModalOpen(true);
+                              }}
+                              className={styles.actionBtn}
+                            >
+                              <Edit2 size={14} />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(c)}
+                              className={styles.actionBtn}
+                              style={{ color: '#ef4444', marginLeft: '8px' }}
+                              title="Delete category"
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                      return rows;
+                    });
+                  })()
                 )}
               </tbody>
             </table>

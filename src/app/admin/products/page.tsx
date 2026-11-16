@@ -19,9 +19,11 @@ import {
 import styles from '../admin.module.css';
 import Pagination from '../components/Pagination';
 
+type CategoryWithProductCount = Category & { productCount?: number };
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryWithProductCount[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [attributes, setAttributes] = useState<AttributeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,11 @@ export default function AdminProductsPage() {
     const start = (currentPage - 1) * pageSize;
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, totalProducts, products.length, currentPage, pageSize]);
+
+  const filterCategories = useMemo(
+    () => categories.filter((category) => (category.productCount || 0) > 0),
+    [categories]
+  );
 
   const handleBulk = async (operation: 'activate' | 'deactivate' | 'publish' | 'unpublish' | 'delete') => {
     if (!selectedIds.length || (operation === 'delete' && !confirm('Delete selected products?'))) return;
@@ -345,10 +352,10 @@ export default function AdminProductsPage() {
                 className={styles.filterSelect}
                 style={{ minWidth: '170px' }}
               >
-                <option value="all">All Categories ({categories.length})</option>
-                {categories.map((c) => (
+                <option value="all">All Categories ({filterCategories.length})</option>
+                {filterCategories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.name} ({c.productCount})
                   </option>
                 ))}
               </select>

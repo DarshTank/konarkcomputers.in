@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube, ArrowRight } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube, ArrowRight, ArrowUp } from "lucide-react";
 import { BUSINESS } from "@/lib/business";
 import styles from "./Footer.module.css";
 
@@ -175,6 +175,12 @@ export function Footer() {
             ))}
           </ul>
         </div>
+      </div>
+
+      <div className={`container ${styles.footerBottomAction}`}>
+        <a href="#page-top" className={styles.backToTop} aria-label="Back to top" title="Back to top">
+          <ArrowUp size={18} aria-hidden="true" />
+        </a>
       </div>
 
       {/* Bottom Bar */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import type { Product, Category, AttributeDefinition, CompatibilityRule, TaxSettings, QuoteSwapSnapshot } from '@/lib/db/types';
 import type { DeviceContext, CompatResult } from '@/lib/compat/types';
 import { evaluateProductCompatibility, validateCartConflicts } from '@/lib/compat/engine';
@@ -103,13 +103,13 @@ export function QuoteProvider({
     return true;
   };
 
-  const refreshProducts = (products: Product[]) => {
+  const refreshProducts = useCallback((products: Product[]) => {
     const byId = new Map(products.map((product) => [product.id, product]));
     setCart((prev) => prev.map((item) => {
       const current = byId.get(item.product.id);
       return current ? { ...item, product: current } : item;
     }));
-  };
+  }, []);
 
   const addToQuote = (product: Product, qty = 1) => {
     setCart((prev) => {

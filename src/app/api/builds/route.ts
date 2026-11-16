@@ -28,7 +28,23 @@ export async function POST(request: NextRequest) {
       getBuildProfiles(),
     ]);
     const result = generateBuilds(parsed.data, { ...catalog, profiles }, config);
-    return NextResponse.json({ ...result, catalogVersion: catalog.catalogVersion });
+    const productsById = new Map(catalog.products.map((product) => [product.id, product]));
+    const builds = result.builds.map((build) => ({
+      ...build,
+      parts: build.items
+        .map((item) => productsById.get(item.productId))
+        .filter((product): product is (typeof catalog.products)[number] => Boolean(product))
+        .map((product) => ({
+          id: product.id,
+          name: product.name,
+          categoryId: product.categoryId,
+          brandName: product.brandName,
+          pricing: product.pricing,
+          condition: product.condition,
+          warrantyMonths: product.warrantyMonths,
+        })),
+    }));
+    return NextResponse.json({ ...result, builds, catalogVersion: catalog.catalogVersion });
   } catch (error) {
     return NextResponse.json(
       { error: 'BUILD_GENERATION_FAILED', message: error instanceof Error ? error.message : 'Unable to generate builds' },

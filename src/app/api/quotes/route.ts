@@ -2,21 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { quoteSubmissionSchema } from '@/lib/db/schemas';
 import { getAdminDb } from '@/lib/firebase/admin';
-import {
-  SEED_CATEGORIES,
-  SEED_ATTRIBUTES,
-  SEED_COMPATIBILITY_RULES,
-  SEED_PRODUCTS,
-  SEED_SERVICES,
-  SEED_TAX_SETTINGS,
-  SEED_COMPANY_SETTINGS,
-} from '@/lib/db/seed-data';
 import type {
   Quote,
   QuoteItemSnapshot,
   TaxSettings,
   CompanySettings,
   Product,
+  Category,
+  AttributeDefinition,
+  CompatibilityRule,
 } from '@/lib/db/types';
 import { calculateTotals, type LineItem } from '@/lib/pricing/calculator';
 import {
@@ -65,13 +59,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Bot detected' }, { status: 400 });
     }
 
-    // Try Firestore DB or fallback to seed data
+    // Quotes require the live Firestore catalog.
     let db = null;
     try {
       db = getAdminDb();
     } catch {
-      // In local demo or build mode without credentials
       db = null;
+    }
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Quotation service is temporarily unavailable because the catalog database is not configured.' },
+        { status: 503 }
+      );
     }
 
     // Load Tax & Company Settings (with local + Firestore persistence)
@@ -98,10 +97,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (!product) {
-        product = SEED_PRODUCTS.find((p) => p.id === item.productId) as unknown as Product;
-      }
-
       if (!product || !product.isActive) {
         return NextResponse.json(
           { error: `Product ${item.productId} is no longer available.` },
@@ -113,29 +108,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch Categories, Attributes, Rules for server-side compat verification
-    let categories = SEED_CATEGORIES;
-    let attributes = SEED_ATTRIBUTES;
-    let rules = SEED_COMPATIBILITY_RULES;
+    let categories: Category[] = [];
+    let attributes: AttributeDefinition[] = [];
+    let rules: CompatibilityRule[] = [];
 
-    if (db) {
-      try {
-        const catSnap = await db.collection('categories').where('isActive', '==', true).get();
-        if (!catSnap.empty) {
-          categories = catSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
-
-        const attrSnap = await db.collection('attributeDefinitions').get();
-        if (!attrSnap.empty) {
-          attributes = attrSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
-
-        const ruleSnap = await db.collection('compatibilityRules').where('isActive', '==', true).get();
-        if (!ruleSnap.empty) {
-          rules = ruleSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-        }
-      } catch (e) {
-        console.warn('Error fetching compat configs from Firestore:', e);
-      }
+    try {
+      const [catSnap, attrSnap, ruleSnap] = await Promise.all([
+        db.collection('categories').where('isActive', '==', true).get(),
+        db.collection('attributeDefinitions').get(),
+        db.collection('compatibilityRules').where('isActive', '==', true).get(),
+      ]);
+      categories = catSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Category, 'id'>) }));
+      attributes = attrSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AttributeDefinition, 'id'>) }));
+      rules = ruleSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<CompatibilityRule, 'id'>) }));
+    } catch (e) {
+      console.error('Error fetching compatibility configuration from Firestore:', e);
+      return NextResponse.json(
+        { error: 'Quotation service is temporarily unavailable because catalog configuration could not be loaded.' },
+        { status: 503 }
+      );
     }
 
     // Run Server-Side Compatibility Check

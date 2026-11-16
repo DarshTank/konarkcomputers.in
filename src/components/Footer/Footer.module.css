@@ -13,12 +13,42 @@
   background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-teal) 50%, var(--color-accent) 100%);
 }
 
+.footerBottomAction {
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: var(--space-6);
+}
+
+.backToTop {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--color-border-dark);
+  border-radius: 50%;
+  place-items: center;
+  transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
+}
+
+.backToTop:hover {
+  color: var(--color-dark);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.backToTop:focus-visible {
+  outline: 2px solid var(--color-white);
+  outline-offset: 3px;
+}
+
 .footerGrid {
   display: grid;
   grid-template-columns: 1.3fr 1fr 0.8fr 0.8fr;
   gap: var(--space-12);
   padding-top: var(--space-16);
-  padding-bottom: var(--space-12);
+  padding-bottom: var(--space-6);
 }
 
 @media (max-width: 1024px) {

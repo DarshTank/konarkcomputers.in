@@ -181,7 +181,16 @@ export default function AdminAttributesPage() {
           </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table className={styles.dataTable}>
+            <table className={`${styles.dataTable} ${styles.attributesTable}`}>
+              <colgroup>
+                <col className={styles.attributeCategoryColumn} />
+                <col className={styles.attributeKeyColumn} />
+                <col className={styles.attributeLabelColumn} />
+                <col className={styles.attributeTypeColumn} />
+                <col className={styles.attributeOptionsColumn} />
+                <col className={styles.attributeFilterColumn} />
+                <col className={styles.attributeCompatColumn} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Category</th>

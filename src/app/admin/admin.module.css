@@ -649,6 +649,74 @@
   font-size: var(--text-xs);
 }
 
+.compatibilityTable {
+  table-layout: fixed;
+  min-width: 1100px;
+}
+
+.compatibilitySourceColumn { width: 13%; }
+.compatibilityTargetColumn { width: 13%; }
+.compatibilityMappingColumn { width: 26%; }
+.compatibilitySeverityColumn { width: 9%; }
+.compatibilityMessageColumn { width: 30%; }
+.compatibilityActionColumn { width: 9%; }
+
+.compatibilityTable th,
+.compatibilityTable td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.compatibilityTable th:nth-child(4),
+.compatibilityTable th:nth-child(6),
+.compatibilityTable td:nth-child(6) {
+  white-space: nowrap;
+}
+
+.compatibilityTable td:nth-child(3) code,
+.compatibilityTable td:nth-child(5) {
+  overflow-wrap: anywhere;
+}
+
+.compatibilityTable td:nth-child(4) .statusPill {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  justify-content: center;
+}
+
+/* Keep the attributes table readable when option lists contain long values. */
+.attributesTable {
+  table-layout: fixed;
+  min-width: 1000px;
+}
+
+.attributeCategoryColumn { width: 14%; }
+.attributeKeyColumn { width: 15%; }
+.attributeLabelColumn { width: 14%; }
+.attributeTypeColumn { width: 8%; }
+.attributeOptionsColumn { width: 29%; }
+.attributeFilterColumn { width: 9%; }
+.attributeCompatColumn { width: 11%; }
+
+.attributesTable th,
+.attributesTable td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.attributesTable td:nth-child(5) {
+  overflow-wrap: anywhere;
+}
+
+.attributesTable .statusPill {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  justify-content: center;
+  line-height: 1.25;
+}
+
 .dataTable th {
   background: #f8fafc;
   padding: 10px 14px;

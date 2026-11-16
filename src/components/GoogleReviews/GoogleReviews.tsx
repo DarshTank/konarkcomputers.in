@@ -47,6 +47,7 @@ export function GoogleReviews() {
   const [total, setTotal] = useState(274);
   const [loading, setLoading] = useState(false);
   const [activeTag, setActiveTag] = useState<string>("All");
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   const googleMapsUrl = BUSINESS.googleReviewsUrl;
 
@@ -96,6 +97,10 @@ export function GoogleReviews() {
       searchTerms.some((term) => r.text.toLowerCase().includes(term))
     );
   }, [reviews, activeTag]);
+
+  const visibleReviews = showAllReviews
+    ? filteredReviews
+    : filteredReviews.slice(0, 4);
 
   return (
     <section className={styles.reviewsSection}>
@@ -160,7 +165,10 @@ export function GoogleReviews() {
             {tags.map((t, idx) => (
               <button
                 key={idx}
-                onClick={() => setActiveTag(t.label)}
+                onClick={() => {
+                  setActiveTag(t.label);
+                  setShowAllReviews(false);
+                }}
                 className={`${styles.tagPill} ${
                   activeTag === t.label ? styles.tagPillActive : ""
                 } ${t.label === "All" ? styles.tagPillAll : ""}`}
@@ -181,7 +189,7 @@ export function GoogleReviews() {
         ) : (
           <div className={styles.reviewsGrid}>
             {filteredReviews.length > 0 ? (
-              filteredReviews.map((review, idx) => (
+              visibleReviews.map((review, idx) => (
               <AnimatedSection key={idx} delay={idx * 100}>
                 <div className={styles.reviewCard}>
                   <div className={styles.cardTop}>
@@ -226,6 +234,19 @@ export function GoogleReviews() {
           ) : (
             <p className={styles.noReviewsMsg}>No reviews matching &quot;{activeTag}&quot;. <button onClick={() => setActiveTag("All")} className={styles.resetBtn}>Reset filter</button></p>
           )}
+          </div>
+        )}
+
+        {!loading && filteredReviews.length > 4 && (
+          <div className={styles.showMoreRow}>
+            <button
+              type="button"
+              className={styles.showMoreButton}
+              onClick={() => setShowAllReviews((current) => !current)}
+              aria-expanded={showAllReviews}
+            >
+              {showAllReviews ? 'Show fewer reviews' : `Show all ${filteredReviews.length} reviews`}
+            </button>
           </div>
         )}
 

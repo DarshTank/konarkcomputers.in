@@ -1,17 +1,6 @@
 import { getAdminDb } from '../firebase/admin';
 import { unstable_cache } from 'next/cache';
 import {
-  SEED_CATEGORIES,
-  SEED_BRANDS,
-  SEED_ATTRIBUTES,
-  SEED_COMPATIBILITY_RULES,
-  SEED_PRODUCTS,
-  SEED_SERVICES,
-  SEED_TAX_SETTINGS,
-  SEED_COMPANY_SETTINGS,
-  SEED_QUOTE_SETTINGS,
-} from './seed-data';
-import {
   getQuoteSettings,
   getCompanySettings,
   getTaxSettings,
@@ -53,21 +42,7 @@ function timestampValue(value: unknown): number {
 async function loadCatalogSnapshot(): Promise<CatalogSnapshot> {
   const db = getAdminDb();
   if (!db) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Catalog database is unavailable');
-    }
-    return {
-      categories: SEED_CATEGORIES as unknown as Category[],
-      brands: SEED_BRANDS as unknown as Brand[],
-      attributes: SEED_ATTRIBUTES as unknown as AttributeDefinition[],
-      products: (SEED_PRODUCTS as unknown as Product[]).filter((product) => product.isPublished === true),
-      rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
-      services: SEED_SERVICES as unknown as ServiceItem[],
-      taxSettings: await getTaxSettings(),
-      companySettings: await getCompanySettings(),
-      quoteSettings: await getQuoteSettings(),
-      catalogVersion: 'seed',
-    };
+    throw new Error('Catalog database is unavailable');
   }
 
   const [catSnap, brandSnap, attrSnap, prodSnap, ruleSnap, srvSnap] = await Promise.all([
@@ -114,15 +89,15 @@ export async function getCatalogSnapshot(): Promise<CatalogSnapshot> {
 
 /**
  * Get active catalog data.
- * Checks Firestore with fallback to seed data.
+ * Reads catalog data from Firestore.
  * Settings (tax, company, quote) are always loaded via the multi-tier settings store.
  */
 export async function getActiveCatalog(): Promise<CatalogData> {
   // Always load settings using the unified multi-tier settings loader
   const [taxSettings, companySettings, quoteSettings] = await Promise.all([
-    getTaxSettings().catch(() => SEED_TAX_SETTINGS),
-    getCompanySettings().catch(() => SEED_COMPANY_SETTINGS),
-    getQuoteSettings().catch(() => SEED_QUOTE_SETTINGS),
+    getTaxSettings(),
+    getCompanySettings(),
+    getQuoteSettings(),
   ]);
 
   let db = null;
@@ -134,12 +109,12 @@ export async function getActiveCatalog(): Promise<CatalogData> {
 
   if (!db) {
     return {
-      categories: SEED_CATEGORIES as unknown as Category[],
-      brands: SEED_BRANDS as unknown as Brand[],
-      attributes: SEED_ATTRIBUTES as unknown as AttributeDefinition[],
-      products: SEED_PRODUCTS as unknown as Product[],
-      rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
-      services: SEED_SERVICES as unknown as ServiceItem[],
+      categories: [],
+      brands: [],
+      attributes: [],
+      products: [],
+      rules: [],
+      services: [],
       taxSettings,
       companySettings,
       quoteSettings,
@@ -162,31 +137,21 @@ export async function getActiveCatalog(): Promise<CatalogData> {
         db.collection('services').where('isActive', '==', true).get().catch(() => null),
       ]);
 
-    const categories = catSnap && !catSnap.empty
+    const categories = catSnap
       ? catSnap.docs
           .map((d) => ({ id: d.id, ...(d.data() as any) }))
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-      : (SEED_CATEGORIES as unknown as Category[]);
+      : [];
 
-    const brands = brandSnap && !brandSnap.empty
-      ? brandSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-      : (SEED_BRANDS as unknown as Brand[]);
+    const brands = brandSnap ? brandSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) : [];
 
-    const attributes = attrSnap && !attrSnap.empty
-      ? attrSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-      : (SEED_ATTRIBUTES as unknown as AttributeDefinition[]);
+    const attributes = attrSnap ? attrSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) : [];
 
-    const products = prodSnap && !prodSnap.empty
-      ? prodSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-      : (SEED_PRODUCTS as unknown as Product[]);
+    const products = prodSnap ? prodSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) : [];
 
-    const rules = ruleSnap && !ruleSnap.empty
-      ? ruleSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-      : (SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[]);
+    const rules = ruleSnap ? ruleSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) : [];
 
-    const services = srvSnap && !srvSnap.empty
-      ? srvSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-      : (SEED_SERVICES as unknown as ServiceItem[]);
+    const services = srvSnap ? srvSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) : [];
 
     return {
       categories,
@@ -202,12 +167,12 @@ export async function getActiveCatalog(): Promise<CatalogData> {
   } catch (error) {
     console.warn('Error fetching catalog collections from Firestore, falling back to seed data:', error);
     return {
-      categories: SEED_CATEGORIES as unknown as Category[],
-      brands: SEED_BRANDS as unknown as Brand[],
-      attributes: SEED_ATTRIBUTES as unknown as AttributeDefinition[],
-      products: SEED_PRODUCTS as unknown as Product[],
-      rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
-      services: SEED_SERVICES as unknown as ServiceItem[],
+      categories: [],
+      brands: [],
+      attributes: [],
+      products: [],
+      rules: [],
+      services: [],
       taxSettings,
       companySettings,
       quoteSettings,
@@ -222,15 +187,15 @@ export async function getQuoteCatalogMetadata(): Promise<{
   taxSettings: TaxSettings;
 }> {
   const [taxSettings, db] = await Promise.all([
-    getTaxSettings().catch(() => SEED_TAX_SETTINGS),
+    getTaxSettings(),
     Promise.resolve(getAdminDb()),
   ]);
 
   if (!db) {
     return {
-      categories: SEED_CATEGORIES as unknown as Category[],
-      attributes: SEED_ATTRIBUTES as unknown as AttributeDefinition[],
-      rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
+      categories: [],
+      attributes: [],
+      rules: [],
       taxSettings,
     };
   }
@@ -250,9 +215,9 @@ export async function getQuoteCatalogMetadata(): Promise<{
     };
   } catch {
     return {
-      categories: SEED_CATEGORIES as unknown as Category[],
-      attributes: SEED_ATTRIBUTES as unknown as AttributeDefinition[],
-      rules: SEED_COMPATIBILITY_RULES as unknown as CompatibilityRule[],
+      categories: [],
+      attributes: [],
+      rules: [],
       taxSettings,
     };
   }
